@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Udambu</title>
+  <meta name="description" content="Explore the human body in real 3D. Tap a body part to see it, hear about it and watch it work.">
+  <meta name="theme-color" content="#0077b6">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="stylesheet" href="vendor/tokens.css">
+  <link rel="stylesheet" href="vendor/kolam.css">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <button class="k-iconbtn back" id="back" aria-label="Back" hidden></button>
+    <a class="brand" href="#/" aria-label="Udambu home"><span class="brand-mark" aria-hidden="true"></span><span class="brand-name">Udambu</span></a>
+    <span class="topbar-title" id="title"></span>
+    <button class="k-iconbtn" id="mute" aria-label="Voice on" aria-pressed="false"></button>
+  </header>
+  <main id="app" tabindex="-1"></main>
+  <nav class="k-bottomnav tabbar" aria-label="Main">
+    <a href="#/" data-tab="body"><span class="k-pip" data-icon="person"></span>Body</a>
+    <a href="#/parts" data-tab="parts"><span class="k-pip" data-icon="grid"></span>Parts</a>
+    <a href="#/sick" data-tab="sick"><span class="k-pip" data-icon="germ"></span>Sickness</a>
+    <a href="#/play" data-tab="play"><span class="k-pip" data-icon="star"></span>Play</a>
+  </nav>
+  <div class="toast-wrap" id="toast" aria-live="polite"></div>
+  <script src="parts.js"></script>
+  <script src="illnesses.js"></script>
+  <script src="models.js"></script>
+  <script src="demos.js"></script>
+  <script src="bodymap.js"></script>
+  <script src="audio/clips.js"></script>
+  <script src="voice.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

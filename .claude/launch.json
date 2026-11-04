@@ -1,0 +1,1 @@
+{ "version": "0.0.1", "configurations": [ { "name": "udambu", "runtimeExecutable": "python3", "runtimeArgs": ["-m", "http.server", "5260"], "port": 5260 } ] }
