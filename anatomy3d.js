@@ -329,7 +329,7 @@
 
   const LAYER_PARTS = {
     outside: ['skin', 'hair-nails', 'eyes', 'ears', 'nose', 'mouth'],
-    organs: ['brain', 'eyes', 'tongue', 'teeth', 'tonsils', 'voice-box', 'thyroid', 'windpipe', 'food-pipe', 'lungs', 'heart', 'diaphragm', 'liver', 'gallbladder', 'stomach', 'spleen', 'pancreas', 'kidneys', 'adrenal', 'small-intestine', 'large-intestine', 'appendix', 'bladder'],
+    organs: ['brain', 'tongue', 'teeth', 'tonsils', 'voice-box', 'thyroid', 'windpipe', 'food-pipe', 'lungs', 'heart', 'diaphragm', 'liver', 'gallbladder', 'stomach', 'spleen', 'pancreas', 'kidneys', 'adrenal', 'small-intestine', 'large-intestine', 'appendix', 'bladder'],
     bones: ['skull', 'spine', 'ribs', 'skeleton', 'arm-bones', 'hand', 'leg-bones', 'foot', 'joints'],
     muscles: ['muscles', 'diaphragm', 'heart', 'tongue'],
     nerves: ['brain', 'pituitary', 'spinal-cord', 'nerves', 'eyes'],
