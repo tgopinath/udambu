@@ -1,5 +1,6 @@
 // Real 3D models from Sketchfab, each one checked by hand to be right for children.
 // Pick again with tools/find3d.py (contact sheets in .work/sheets) — never add a model unseen.
+// "body" is the full-body model on the home screen. Previews: img/models/<key>.jpg
 const MODELS = {
  "brain": {
   "uid": "0aa0e33c5c854d1bab7bac9e1c7acaec",
@@ -294,5 +295,11 @@ const MODELS = {
   "name": "Bowel Anatomy",
   "by": "University of Dundee, CAHID",
   "license": null
+ },
+ "body": {
+  "uid": "6a7a537a71444f6e8201e18a685a013d",
+  "name": "Animated Human Body with circulatory system",
+  "by": "AVRcontent",
+  "license": "Standard"
  }
 };

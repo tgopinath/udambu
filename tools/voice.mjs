@@ -23,11 +23,11 @@ QUIZ.forEach((q, i) => {
 for (let n = 0; n <= 10; n++) { const m = n >= 8 ? 'Excellent. You know your body well.' : n >= 5 ? 'Well done. You learned a lot.' : 'Good try. Play again to learn more.'; add(`ui-score-${n}`, `You got ${n} out of 10. ${m}`); }
 for (const s of SYSTEMS) add(`sys-${s.key}`, `${s.name}. ${s.say}`);
 Object.assign(lines, {
-  'ui-home': 'Turn the body with your finger. Tap any part to see what it does.',
+  'ui-home': 'Pick a body system, then tap a part to see it in 3D and learn what it does.',
   'ui-parts': 'Here are all the parts of your body. Tap a picture to explore it.',
   'ui-sick': 'Sometimes our body gets sick or hurt. Tap one to learn about it, and how to stay healthy.',
   'ui-grownup': 'Feeling sick? Tell a grown-up. Only a doctor can say what is wrong.',
-  'ui-play': 'Pick a game. In the body quiz, answer questions and learn about every part. In find the part, tap it on the body. In what does this, watch and pick the part.',
+  'ui-play': 'Pick a game. In the body quiz, answer questions and learn about every part. In what does this, watch and pick the part.',
   'ui-3d': 'Drag with your finger to turn it around.', 'which-q': 'Which part does this?',
 });
 const man = fs.existsSync('.work/voice.json') ? JSON.parse(fs.readFileSync('.work/voice.json', 'utf8')) : {};

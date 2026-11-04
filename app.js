@@ -65,7 +65,7 @@ document.addEventListener('click', (e) => {
 const routes = [
   [/^#?\/?$/, home], [/^#\/parts$/, partsPage], [/^#\/part\/([\w-]+)$/, partPage],
   [/^#\/sick$/, sickPage], [/^#\/ill\/([\w-]+)$/, illPage], [/^#\/play$/, playPage],
-  [/^#\/play\/quiz$/, quizGame], [/^#\/play\/find$/, findGame], [/^#\/play\/which$/, whichGame],
+  [/^#\/play\/quiz$/, quizGame], [/^#\/play\/which$/, whichGame],
 ];
 let cleanups = [];
 const onLeave = (fn) => cleanups.push(fn);
@@ -78,62 +78,65 @@ function render() {
   const deep = /^#\/(part|ill)\/|^#\/play\//.test(h);
   $('#back').hidden = !deep; document.body.classList.toggle('deep', deep);
   window.scrollTo(0, 0);
-  Anatomy.paint(app);
+  mountSketchfab(app);
 }
 $('#back').onclick = () => { haptic(); history.length > 1 ? history.back() : (location.hash = '#/'); };
 window.addEventListener('hashchange', render);
 const setTitle = (t) => { $('#title').textContent = t || ''; document.title = t ? `${t} · Udambu` : 'Udambu'; };
-const img3d = (k, cls = '') => `<img class="${cls}" data-3d="${k}" alt="">`;
+const img3d = (k, cls = '') => `<img class="${cls}" src="img/models/${k}.jpg" alt="" loading="lazy">`;
+// a real 3D model from Sketchfab, turning by itself until the child drags it. The still picture underneath
+// stays until Sketchfab's viewer says the model is drawn (viewer API), so a child never sees a loading screen.
+const sketchfab = (k, title) => MODELS[k] ? `<iframe class="sf" data-uid="${MODELS[k].uid}" title="${esc(title)} in 3D" allow="autoplay; fullscreen; xr-spatial-tracking" allowfullscreen></iframe>` : '';
+const SF_OPTS = { autostart: 1, preload: 1, autospin: 0.25, ui_theme: 'dark', ui_infos: 0, ui_watermark: 0, ui_watermark_link: 0, ui_controls: 0, ui_stop: 0, ui_inspector: 0,
+  ui_settings: 0, ui_vr: 0, ui_ar: 0, ui_help: 0, ui_annotations: 0, ui_hint: 2, ui_loading: 0, ui_fullscreen: 0, dnt: 1 };
+let sfApi = null;
+function mountSketchfab(root = document) {
+  const frames = [...root.querySelectorAll('iframe.sf:not([data-on])')]; if (!frames.length) return;
+  sfApi ??= new Promise((ok, no) => { const s = document.createElement('script'); s.src = 'https://static.sketchfab.com/api/sketchfab-viewer-1.12.1.js'; s.onload = () => ok(window.Sketchfab); s.onerror = no; document.head.appendChild(s); });
+  frames.forEach(f => { f.dataset.on = 1;
+    const plain = () => { f.src = `https://sketchfab.com/models/${f.dataset.uid}/embed?` + new URLSearchParams(SF_OPTS); setTimeout(() => f.classList.add('ready'), 4000); };
+    sfApi.then(SF => new SF('1.12.1', f).init(f.dataset.uid, { ...SF_OPTS,
+      success: (api) => { api.start(); api.addEventListener('viewerready', () => f.classList.add('ready')); }, error: plain })).catch(plain);
+  });
+}
+const credit = (k) => { const m = MODELS[k]; return m ? `<p class="credit">3D model “${esc(m.name)}” by ${esc(m.by)} on Sketchfab${m.license ? ' · ' + esc(m.license) : ''}</p>` : ''; };
 const eyebrow = (t) => `<p class="eyebrow">${esc(t)}</p>`;
 
 // picture card for a part (its 3D model)
 const partCard = (p) => `<a class="pcard" href="#/part/${p.key}" style="--sys:${SYS[p.sys].color}">
   <span class="pcard-art">${img3d(p.key)}</span><span class="pcard-text"><span class="pcard-sys">${esc(SYS[p.sys].name)}</span><span class="pcard-name">${esc(p.name)}</span></span></a>`;
 
-const LAYERS = [
-  { key: 'organs', name: 'Organs', icon: 'heart' }, { key: 'bones', name: 'Bones', icon: 'bone' }, { key: 'muscles', name: 'Muscles', icon: 'muscle' },
-  { key: 'nerves', name: 'Nerves', icon: 'zap' }, { key: 'blood', name: 'Blood', icon: 'drop' }, { key: 'outside', name: 'Skin', icon: 'person' },
-];
-
-// ---------- Home: the 3D body ----------
+// ---------- Home: full-body 3D hero, then body systems ----------
 function home() {
   setTitle('');
-  let layer = store.get('layer3d', 'organs');
+  let sys = store.get('homeSys', SYSTEMS[0].key);
   app.innerHTML = `
     <section class="home">
-      <header class="home-head">
-        <div>${eyebrow('Human body atlas')}<h1 class="display">Explore the human body</h1>
-          <p class="lede">Turn the body with your finger. Tap any part to see what it does.</p></div>
-        ${speakBtn('ui-home', 'Turn the body with your finger. Tap any part to see what it does.', 'Listen')}
-      </header>
-      <div class="layers" role="tablist" aria-label="Show">${LAYERS.map(l => `<button class="layer" role="tab" data-layer="${l.key}" aria-selected="${l.key === layer}">${icon(l.icon)}<span>${l.name}</span></button>`).join('')}</div>
-      <div class="stage" id="stage3d"><div class="stage-pop" id="pop" hidden></div><p class="stage-hint">${icon('cube')} Drag to turn · Tap a part</p></div>
-      <aside class="side"><p class="eyebrow" id="side-title"></p><div class="plist" id="plist"></div></aside>
+      <div class="hero3d">
+        <div class="hero3d-model">${img3d('body', 'poster')}${sketchfab('body', 'The human body')}</div>
+        <div class="hero3d-text">
+          ${eyebrow('Human body atlas')}
+          <h1 class="display">Explore the<br>human body</h1>
+          <p class="lede">${PARTS.length} body parts in real 3D. Pick a body system, then tap a part.</p>
+          ${speakBtn('ui-home', 'Pick a body system, then tap a part to see it in 3D and learn what it does.', 'Listen')}
+        </div>
+      </div>
+      <section class="systems">
+        <div class="row-head"><h2 class="heading-2">Body systems</h2><a class="link" href="#/parts">All parts ${icon('next')}</a></div>
+        <div class="sysrail" role="tablist">${SYSTEMS.map(s => { const first = PARTS.find(p => p.sys === s.key);
+          return `<button class="systile" role="tab" data-sys="${s.key}" aria-selected="${s.key === sys}" style="--sys:${s.color}">${img3d(first.key)}<span><b>${esc(s.name)}</b><small>${PARTS.filter(p => p.sys === s.key).length} parts</small></span></button>`; }).join('')}</div>
+      </section>
+      <section class="sysparts" id="sysparts"></section>
     </section>`;
-  const pop = $('#pop');
-  const view = Anatomy.body($('#stage3d'), { layer, onPick: (k, pt) => {
-    if (!k || !PART[k]) { pop.hidden = true; return; }
-    haptic(); const p = PART[k];
-    pop.innerHTML = `<a href="#/part/${k}">${img3d(k)}<span><small>${esc(SYS[p.sys].name)}</small><b>${esc(p.name)}</b></span>${icon('next')}</a>`;
-    Anatomy.paint(pop); pop.hidden = false;
-    const w = $('#stage3d').clientWidth; pop.style.left = Math.min(Math.max(pt.x, 120), w - 120) + 'px'; pop.style.top = Math.max(pt.y, 70) + 'px';
-    say('name-' + k, p.name);
-  } });
-  onLeave(view.destroy);
-  const paint = () => {
-    const keys = Anatomy.LAYER_PARTS[layer].filter(k => PART[k]);
-    $('#side-title').textContent = `${LAYERS.find(l => l.key === layer).name} · ${keys.length} parts`;
-    $('#plist').innerHTML = keys.map(k => `<a class="prow" href="#/part/${k}">${img3d(k)}<span>${esc(PART[k].name)}</span>${icon('next')}</a>`).join('');
-    Anatomy.paint($('#plist'));
-    document.querySelectorAll('.layer').forEach(b => b.setAttribute('aria-selected', String(b.dataset.layer === layer)));
-    pop.hidden = true;
+  const paint = (speak) => {
+    const s = SYS[sys];
+    $('#sysparts').innerHTML = `<div class="row-head"><div><h2 class="heading-2">${esc(s.name)}</h2><p class="muted">${esc(s.say)}</p></div>${speakBtn('sys-' + s.key, s.name + '. ' + s.say, 'Listen', true)}</div>
+      <div class="pgrid">${PARTS.filter(p => p.sys === sys).map(partCard).join('')}</div>`;
+    document.querySelectorAll('.systile').forEach(b => b.setAttribute('aria-selected', String(b.dataset.sys === sys)));
+    if (speak) say('sys-' + s.key, s.name + '. ' + s.say);
   };
   paint();
-  app.querySelector('.layers').onclick = (e) => {
-    const b = e.target.closest('[data-layer]'); if (!b) return;
-    haptic(); layer = b.dataset.layer; store.set('layer3d', layer); view.show(layer); paint();
-    say('layer-' + layer, LAYERS.find(l => l.key === layer).name);
-  };
+  app.querySelector('.sysrail').onclick = (e) => { const b = e.target.closest('[data-sys]'); if (!b) return; haptic(); sys = b.dataset.sys; store.set('homeSys', sys); paint(true); };
 }
 
 // ---------- All parts, by body system ----------
@@ -158,11 +161,12 @@ function partPage(key) {
   const prev = team[(i - 1 + team.length) % team.length], next = team[(i + 1) % team.length];
   app.innerHTML = `<article class="part" style="--sys:${s.color}">
     <header class="part-hero">
-      <div class="hero-model" id="spin"><p class="stage-hint">${icon('cube')} Drag to turn</p></div>
+      <div class="hero-model">${img3d(key, 'poster')}${sketchfab(key, p.name)}<p class="stage-hint">${icon('cube')} Drag to turn · pinch to zoom</p></div>
       <div class="hero-text">
         ${eyebrow(s.name)}
         <div class="part-title"><h1 class="display">${esc(p.name)}</h1>${speakBtn(key + '-say', p.name + '. ' + p.say, 'Listen')}</div>
         <p class="lede">${esc(p.say)}</p>
+        ${credit(key)}
         <nav class="jump">${[['how', 'How it works'], ['more', 'What it does'], ['facts', 'Facts'], ['care', 'Care']].map(([id, t]) => `<a href="#${id}" data-jump="${id}">${t}</a>`).join('')}</nav>
       </div>
     </header>
@@ -193,26 +197,13 @@ function partPage(key) {
       <div class="ill-chips">${p.ill.map(k => ILL[k] && `<a class="ill-chip" href="#/ill/${k}">${icon(kindIcon(ILL[k]))}${esc(ILL[k].name)}${icon('next')}</a>`).join('')}</div>
     </section>` : ''}
 
-    ${m ? `<section class="block">
-      <div class="block-head"><span class="num">${p.ill.length ? '06' : '05'}</span><h2 class="heading-2">Scientific 3D model</h2></div>
-      <div class="viewer" id="viewer"><button class="viewer-start">${img3d(key)}<span class="viewer-cta">${icon('cube')} Open detailed model</span></button></div>
-      <p class="credit">“${esc(m.name)}” by ${esc(m.by)} on Sketchfab${m.license ? ' · ' + esc(m.license) : ''}. Needs the internet.</p>
-    </section>` : ''}
-
     <nav class="prevnext">
       <a href="#/part/${prev.key}">${icon('back')}<span><small>Previous</small>${esc(prev.name)}</span></a>
       <a href="#/part/${next.key}"><span><small>Next</small>${esc(next.name)}</span>${icon('next')}</a>
     </nav>
   </article>`;
 
-  const sp = Anatomy.spin($('#spin'), key); if (sp) onLeave(sp.destroy);
   app.querySelector('.jump').onclick = (e) => { const a = e.target.closest('[data-jump]'); if (!a) return; e.preventDefault(); document.getElementById(a.dataset.jump).scrollIntoView({ behavior: 'smooth' }); };
-  const vs = $('.viewer-start');
-  if (vs) vs.onclick = () => { haptic();
-    $('#viewer').innerHTML = `<iframe title="${esc(p.name)} in 3D" allow="autoplay; fullscreen; xr-spatial-tracking" allowfullscreen
-      src="https://sketchfab.com/models/${m.uid}/embed?autostart=1&preload=1&ui_theme=dark&ui_infos=0&ui_watermark=0&ui_watermark_link=0&ui_controls=1&ui_stop=0&ui_inspector=0&ui_settings=0&ui_vr=0&ui_ar=0&ui_help=0&ui_annotations=0&dnt=1"></iframe>`;
-    say('ui-3d', 'Drag with your finger to turn it around.'); };
-
   // step captions follow the 8-second animation
   const svg = $('#stage svg'), steps = [...document.querySelectorAll('#steps li')];
   let paused = false, raf;
@@ -242,7 +233,6 @@ function sickPage() {
       <span class="irow-art">${img3d(i.parts[0])}</span>
       <span class="irow-text"><b>${esc(i.name)}</b><small>${esc(i.parts.map(k => PART[k]?.name).filter(Boolean).slice(0, 2).join(' · '))}</small></span>
       ${i.spread ? `<span class="tag">${icon('people')} Spreads</span>` : MOSQUITO.has(i.key) ? `<span class="tag">${icon('mosquito')} Mosquito</span>` : ''}${icon('next')}</a>`).join('');
-    Anatomy.paint($('#ig'));
     document.querySelectorAll('.seg button').forEach(b => b.setAttribute('aria-selected', String(b.dataset.k === f)));
   };
   paint();
@@ -255,7 +245,7 @@ function illPage(key) {
   const list = (arr, id, ic) => `<ul class="rows">${arr.map((t, n) => `<li><button data-say="${key}-${id}-${n}" data-text="${esc(t)}">${icon(ic)}<span>${esc(t)}</span>${icon('speaker', 'row-say')}</button></li>`).join('')}</ul>`;
   app.innerHTML = `<article class="part ill kind-${i.kind}">
     <header class="part-hero">
-      <div class="hero-model" id="spin"></div>
+      <div class="hero-model">${img3d(i.parts[0], 'hero-img')}</div>
       <div class="hero-text">
         ${eyebrow(KIND_NAME[i.kind])}
         <div class="part-title"><h1 class="display">${esc(i.name)}</h1>${speakBtn(key + '-say', i.name + '. ' + i.say, 'Listen')}</div>
@@ -269,7 +259,6 @@ function illPage(key) {
     <section class="block"><div class="block-head"><span class="num">04</span><h2 class="heading-2">Body parts affected</h2></div><div class="pgrid small">${i.parts.map(k => PART[k] && partCard(PART[k])).join('')}</div></section>
     <div class="note">${icon('doctor')}<p><b>Feeling unwell? Tell a grown-up.</b> Only a doctor can say what is wrong and what medicine you need.</p></div>
   </article>`;
-  const sp = Anatomy.spin($('#spin'), i.parts[0]); if (sp) onLeave(sp.destroy);
   setTimeout(() => say(key + '-say', i.name + '. ' + i.say, $('.part-title .speak')), 300);
 }
 
@@ -280,10 +269,9 @@ function playPage() {
   const card = (href, k, title, sub, id, lead) => `<a class="game${lead ? ' lead' : ''}" href="${href}"><span class="game-art">${img3d(k)}</span>
     <span class="game-text"><b>${title}</b><span>${sub}</span>${best[id] != null ? `<small>Best: ${best[id]} / 10</small>` : ''}</span>${icon('next')}</a>`;
   app.innerHTML = `<section class="page">
-    <header class="page-head"><div>${eyebrow('Learn by playing')}<h1 class="display">Quiz</h1></div>${speakBtn('ui-play', 'Pick a game. In the body quiz, answer questions and learn about every part. In find the part, tap it on the body. In what does this, watch and pick the part.', 'Listen')}</header>
+    <header class="page-head"><div>${eyebrow('Learn by playing')}<h1 class="display">Quiz</h1></div>${speakBtn('ui-play', 'Pick a game. In the body quiz, answer questions and learn about every part. In what does this, watch and pick the part.', 'Listen')}</header>
     <div class="games">
       ${card('#/play/quiz', 'heart', 'Body quiz', '10 questions. Learn something new after every answer.', 'quiz', true)}
-      ${card('#/play/find', 'skeleton', 'Find the part', 'Tap the right part on the 3D body.', 'find')}
       ${card('#/play/which', 'lungs', 'What does this?', 'Watch the animation, then pick the part.', 'which')}
     </div></section>`;
 }
@@ -307,12 +295,12 @@ function lesson(box, k, right, text, onNext, last, sayId, answer) {
   const p = PART[k];
   box.innerHTML = `<div class="lesson ${right ? 'right' : 'wrong'}">
     <p class="verdict">${icon(right ? 'check' : 'sparkle')} ${right ? 'Correct' : `The answer is ${esc(answer || 'the ' + p.name.toLowerCase())}`}</p>
-    <div class="lesson-body"><div class="lesson-model" id="lmodel"></div>
+    <div class="lesson-body"><div class="lesson-model" id="lmodel">${img3d(k)}<button class="turn3d" id="turn">${icon('cube')} Turn in 3D</button></div>
       <div><h3 class="heading-2">${esc(p.name)}</h3><p class="body-lg">${esc(text)}</p>
       <div class="lesson-actions">${speakBtn(sayId, text, 'Listen')}<a class="k-btn k-btn-outline" href="#/part/${k}">Learn more</a>
       <button class="k-btn k-btn-primary k-btn-lg" id="next">${last ? 'See score' : 'Next question'} ${icon('next')}</button></div></div></div></div>`;
-  const sp = Anatomy.spin($('#lmodel'), k); if (sp) onLeave(sp.destroy);
-  $('#next').onclick = () => { haptic(); sp?.destroy(); onNext(); };
+  $('#turn').onclick = () => { haptic(); $('#lmodel').innerHTML = img3d(k, 'poster') + sketchfab(k, p.name); mountSketchfab($('#lmodel')); };
+  $('#next').onclick = () => { haptic(); onNext(); };
   box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
@@ -342,7 +330,6 @@ function quizGame() {
       ${q.pic ? `<div class="qpic">${img3d(q.pic)}</div>` : ''}
       <div class="opts ${q.opts || q.pic ? 'text' : ''}">${opts.map(o => `<button class="opt" data-n="${o.n}">${o.html}</button>`).join('')}</div>
       <div id="lesson"></div>`;
-    Anatomy.paint(box);
     say(id, prompt);
     box.querySelector('.opts').onclick = (e) => {
       const b = e.target.closest('.opt'); if (!b || answered) return; answered = true;
@@ -361,34 +348,6 @@ function quizGame() {
   ask();
 }
 
-function findGame() {
-  setTitle('Find the part');
-  const pool = shuffle(['organs', 'bones', 'outside'].flatMap(l => Anatomy.LAYER_PARTS[l].map(k => [k, l])).filter(([k]) => PART[k]))
-    .filter(([k], i, a) => a.findIndex(x => x[0] === k) === i).slice(0, 10), score = [];
-  let round = 0, tries = 0;
-  app.innerHTML = `<section class="page gamebox">${scoreBar(score, 0)}<div class="qhead" id="ask"></div><div class="stage game-stage" id="gstage"></div><div id="lesson"></div></section>`;
-  let target, layer;
-  const view = Anatomy.body($('#gstage'), { layer: pool[0][1], onPick: (k) => {
-    if (!target || !k) return;
-    if (k === target) {
-      if (score.length === round) score.push(tries === 0);
-      haptic('success'); Sound.yes(); confetti();
-      app.querySelector('.score').outerHTML = scoreBar(score, round + 1);
-      const p = PART[target]; target = null;
-      lesson($('#lesson'), p.key, true, p.say, () => { $('#lesson').innerHTML = ''; round++; ask(); }, round === 9, 'ok-' + p.key);
-      say('ok-' + p.key, 'Correct! ' + p.say);
-    } else { tries++; haptic('error'); Sound.no(); say('name-' + k, `That is the ${PART[k]?.name || 'wrong part'}. Try again.`); }
-  } });
-  onLeave(view.destroy);
-  const ask = () => {
-    if (round >= 10) return finish('find', score);
-    [target, layer] = pool[round]; tries = 0; view.show(layer); view.reset(); view.zoomTo(target);
-    $('#ask').innerHTML = `<p class="eyebrow">Question ${round + 1} of 10</p><h2 class="question">Find the ${esc(PART[target].name.toLowerCase())}</h2>${speakBtn('find-' + target, 'Find the ' + PART[target].name, 'Listen')}`;
-    say('find-' + target, 'Find the ' + PART[target].name + '!');
-  };
-  ask();
-}
-
 function whichGame() {
   setTitle('What does this?');
   const pool = shuffle(PARTS.filter(p => !['nerves', 'skull', 'ribs'].includes(p.key))).slice(0, 10), score = [];
@@ -401,8 +360,7 @@ function whichGame() {
     box.innerHTML = `${scoreBar(score, round)}
       <div class="qhead"><p class="eyebrow">Question ${round + 1} of 10</p><h2 class="question">Which part does this?</h2>${speakBtn('which-' + p.key, p.how.join(' '), 'Listen to a clue')}</div>
       <div class="demo-stage">${demoSVG(p.demo)}</div>
-      <div class="opts">${opts.map(o => `<button class="opt" data-k="${o.key}">${img3d(o.key)}<span>${esc(o.name)}</span></button>`).join('')}</div><div id="lesson"></div>`;
-    Anatomy.paint(box); say('which-q', 'Which part does this?');
+      <div class="opts">${opts.map(o => `<button class="opt" data-k="${o.key}">${img3d(o.key)}<span>${esc(o.name)}</span></button>`).join('')}</div><div id="lesson"></div>`; say('which-q', 'Which part does this?');
     let answered = false;
     box.querySelector('.opts').onclick = (e) => {
       const b = e.target.closest('.opt'); if (!b || answered) return; answered = true;
