@@ -65,7 +65,7 @@ const DEMOS = {
         ${Array.from({ length: 6 }, (_, i) => `<rect x="${104 + i * 19}" y="130" width="16" height="22" rx="4" fill="#fff" stroke="#c9c2b2" stroke-width="2"/>`).join('')}</g>
       <circle cx="160" cy="112" r="16" fill="#c77700"><animate attributeName="r" values="16;16;0;0" keyTimes="0;.3;.4;1" dur="8s" repeatCount="indefinite"/></circle>
       ${[[-12, -4], [8, 6], [-2, 10], [14, -8], [-16, 8]].map(([x, y]) => `<circle cx="${160 + x}" cy="${112 + y}" r="5" fill="#c77700" opacity="0"><animate attributeName="opacity" values="0;0;1;1;0" keyTimes="0;.35;.4;.9;1" dur="8s" repeatCount="indefinite"/></circle>`).join('')}
-      ${label(160, 210, 'chomp, chomp')}`;
+      ${label(160, 210, 'teeth break food into small pieces')}`;
   },
   brain() {
     const lobe = (d, fill, step) => `<path d="${d}" fill="${fill}" stroke="#b9708a" stroke-width="2">${inStep(step)}</path>`;
@@ -90,7 +90,7 @@ const DEMOS = {
       <g><animateTransform attributeName="transform" type="translate" values="0 0;0 0;0 0;-18 -14;0 0" keyTimes="0;.74;.8;.95;1" dur="8s" repeatCount="indefinite"/>
         <path d="M244 176 q 6 -14 18 -10 l 14 -2 q 8 0 6 8 l -6 22 q -4 8 -14 8 l -14 -2 z" fill="${C.skin}" stroke="#d9a37e" stroke-width="2"/></g>
       <path d="M282 208 q -6 -10 0 -20 q 6 -10 0 -20" stroke="${C.red}" stroke-width="3" fill="none" opacity=".8"><animate attributeName="opacity" values=".9;.3;.9" dur="1s" repeatCount="indefinite"/></path>
-      ${label(290, 220, 'hot!', 'end')}`;
+      ${label(290, 220, 'hot', 'end')}`;
   },
   eye() {
     return `
@@ -220,7 +220,7 @@ const DEMOS = {
       <path stroke="${C.muscle}" stroke-width="6" stroke-linecap="round" fill="none"><animate attributeName="d" values="M194 120 Q 170 116 162 120;M194 120 Q 170 126 162 120;M194 120 Q 170 116 162 120" dur=".12s" repeatCount="indefinite"/></path>
       ${[0, 0.4, 0.8].map(b => dot(4, '#7cc7f0', 'M160 200 L160 30', 1.2, b)).join('')}
       ${[0, 0.5, 1].map(b => `<path d="M220 40 q 14 20 0 40" stroke="${C.blue}" stroke-width="3" fill="none"><animateTransform attributeName="transform" type="translate" values="0 0;60 0" dur="1.5s" begin="-${b}s" repeatCount="indefinite"/><animate attributeName="opacity" values="1;0" dur="1.5s" begin="-${b}s" repeatCount="indefinite"/></path>`).join('')}
-      ${label(160, 104, 'vocal cords')}${label(268, 110, 'hello!', 'middle')}`;
+      ${label(160, 104, 'vocal cords')}${label(268, 110, 'sound', 'middle')}`;
   },
   liver() {
     return `
@@ -237,7 +237,7 @@ const DEMOS = {
       ${[0, 0.3, 0.6].map(b => `<circle r="5" fill="#6aa84f" opacity="0"><animateMotion dur="1s" begin="-${4 + b}s" repeatCount="indefinite" path="M140 92 C 170 110, 170 130, 210 150"/><animate attributeName="opacity" values="0;0;1;1;0" keyTimes="0;.5;.5;.75;.76" dur="8s" repeatCount="indefinite"/></circle>`).join('')}
       <circle cx="250" cy="150" r="14" fill="${C.yellow}"><animate attributeName="r" values="14;14;0;0" keyTimes="0;.7;.8;1" dur="8s" repeatCount="indefinite"/></circle>
       ${[[-8, -4], [6, 4], [10, -8], [-4, 8]].map(([x, y]) => `<circle cx="${250 + x}" cy="${150 + y}" r="4" fill="${C.yellow}" opacity="0"><animate attributeName="opacity" values="0;0;1;1" keyTimes="0;.75;.8;1" dur="8s" repeatCount="indefinite"/></circle>`).join('')}
-      ${label(110, 130, 'squeeze!')}${label(250, 196, 'fat breaks up')}`;
+      ${label(110, 130, 'squeeze')}${label(250, 196, 'fat breaks up')}`;
   },
   kidney() {
     return `
@@ -254,7 +254,7 @@ const DEMOS = {
       ${[0, 0.6].map(b => dot(4, C.yellow, 'M120 20 C 120 60, 140 70, 150 90', 1.2, b) + dot(4, C.yellow, 'M200 20 C 200 60, 180 70, 170 90', 1.2, b)).join('')}
       ${around(160, 130, `<ellipse cx="160" cy="130" rx="50" ry="44" fill="#f2d5d0" stroke="#d29a92" stroke-width="3"/>`, `<animateTransform attributeName="transform" type="scale" values="0.6;1.1;1.1;0.6" keyTimes="0;.6;.8;1" dur="8s" repeatCount="indefinite"/>`)}
       <rect x="120" width="80" fill="#e7c43c" opacity=".7"><animate attributeName="y" values="160;100;100;160" keyTimes="0;.6;.8;1" dur="8s" repeatCount="indefinite"/><animate attributeName="height" values="0;60;60;0" keyTimes="0;.6;.8;1" dur="8s" repeatCount="indefinite"/></rect>
-      <text x="160" y="214" text-anchor="middle" class="demo-label" opacity="0">I am full!<animate attributeName="opacity" values="0;0;1;1;0" keyTimes="0;.55;.6;.8;.85" dur="8s" repeatCount="indefinite"/></text>`;
+      <text x="160" y="214" text-anchor="middle" class="demo-label" opacity="0">full: time for the toilet<animate attributeName="opacity" values="0;0;1;1;0" keyTimes="0;.55;.6;.8;.85" dur="8s" repeatCount="indefinite"/></text>`;
   },
   messenger() {
     const path = 'M90 50 C 140 60, 150 120, 220 140';
@@ -269,7 +269,7 @@ const DEMOS = {
       ${[[90, 70], [230, 60], [250, 160], [80, 170]].map(([x, y], i) => `<g>${germ(x, y, 12)}<animate attributeName="opacity" values="1;1;0;0;1" keyTimes="0;${(i * 0.2 + 0.25).toFixed(2)};${(i * 0.2 + 0.3).toFixed(2)};.98;1" dur="8s" repeatCount="indefinite"/></g>`).join('')}
       <g><animateMotion dur="8s" repeatCount="indefinite" path="M160 110 L 90 70 L 230 60 L 250 160 L 80 170 L 160 110" keyPoints="0;.2;.4;.6;.8;1" keyTimes="0;.25;.45;.65;.85;1" calcMode="linear"/>
         <circle r="22" fill="#f4f6fb" stroke="#b8c2dc" stroke-width="3"><animate attributeName="r" values="22;26;22" dur=".8s" repeatCount="indefinite"/></circle>
-        <circle r="9" fill="#9d8fd6" cx="-4" cy="-3"/><circle cx="7" cy="-6" r="2.5" fill="#1f2433"/><circle cx="-1" cy="-8" r="2.5" fill="#1f2433"/></g>
+        <circle r="9" fill="#9d8fd6" cx="-4" cy="-3"/><circle r="6" fill="#9d8fd6" cx="7" cy="4"/></g>
       ${label(160, 214, 'white cells gobble germs')}`;
   },
   filter() {
@@ -314,7 +314,7 @@ const DEMOS = {
 
 function germ(x, y, r) {
   const spikes = Array.from({ length: 8 }, (_, i) => { const a = i * Math.PI / 4; return `<line x1="${x + Math.cos(a) * r}" y1="${y + Math.sin(a) * r}" x2="${x + Math.cos(a) * r * 1.5}" y2="${y + Math.sin(a) * r * 1.5}" stroke="${C.germ}" stroke-width="3" stroke-linecap="round"/>`; }).join('');
-  return `${spikes}<circle cx="${x}" cy="${y}" r="${r}" fill="${C.germ}"/><circle cx="${x - r / 3}" cy="${y - r / 4}" r="${r / 5}" fill="#fff"/><circle cx="${x + r / 3}" cy="${y - r / 4}" r="${r / 5}" fill="#fff"/>`;
+  return `${spikes}<circle cx="${x}" cy="${y}" r="${r}" fill="${C.germ}"/><circle cx="${x - r / 4}" cy="${y - r / 4}" r="${r / 3}" fill="#ffffff" opacity=".25"/>`;
 }
 
 function stickSkeleton(cx, top, s = 1) {

@@ -54,21 +54,23 @@ muteBtn.onclick = () => { muted = !muted; store.set('muted', muted); if (muted) 
 // say: plays the recorded clip when there is one, otherwise the device voice
 function say(id, text, btn) { if (muted) return; Voice.play(id, text, btn); }
 // a big round speaker button that reads `text`
-const speakBtn = (id, text, label = 'Hear it') => `<button class="speak" data-say="${esc(id)}" data-text="${esc(text)}" aria-label="${esc(label)}">${icon('speaker')}</button>`;
+const speakBtn = (id, text, label = 'Listen', iconOnly = false) => `<button class="speak${iconOnly ? ' icon-only' : ''}" data-say="${esc(id)}" data-text="${esc(text)}" aria-label="${esc(label)}">${icon('speaker')}${iconOnly ? '' : `<span>${esc(label)}</span>`}</button>`;
 document.addEventListener('click', (e) => {
   const b = e.target.closest('[data-say]');
   if (b) { e.preventDefault(); e.stopPropagation(); haptic(); Voice.play(b.dataset.say, b.dataset.text, b); }
 }, true);
 
+
 // ---------- Router ----------
 const routes = [
   [/^#?\/?$/, home], [/^#\/parts$/, partsPage], [/^#\/part\/([\w-]+)$/, partPage],
   [/^#\/sick$/, sickPage], [/^#\/ill\/([\w-]+)$/, illPage], [/^#\/play$/, playPage],
-  [/^#\/play\/find$/, findGame], [/^#\/play\/which$/, whichGame],
+  [/^#\/play\/quiz$/, quizGame], [/^#\/play\/find$/, findGame], [/^#\/play\/which$/, whichGame],
 ];
-let cleanup = null;
+let cleanups = [];
+const onLeave = (fn) => cleanups.push(fn);
 function render() {
-  cleanup?.(); cleanup = null; Voice.stop();
+  cleanups.forEach(f => { try { f(); } catch {} }); cleanups = []; Voice.stop();
   const h = location.hash || '#/';
   for (const [re, fn] of routes) { const m = h.match(re); if (m) { fn(...m.slice(1)); break; } }
   const tab = /^#\/part/.test(h) ? 'parts' : /^#\/(sick|ill)/.test(h) ? 'sick' : /^#\/play/.test(h) ? 'play' : 'body';
@@ -76,72 +78,73 @@ function render() {
   const deep = /^#\/(part|ill)\/|^#\/play\//.test(h);
   $('#back').hidden = !deep; document.body.classList.toggle('deep', deep);
   window.scrollTo(0, 0);
+  Anatomy.paint(app);
 }
 $('#back').onclick = () => { haptic(); history.length > 1 ? history.back() : (location.hash = '#/'); };
 window.addEventListener('hashchange', render);
 const setTitle = (t) => { $('#title').textContent = t || ''; document.title = t ? `${t} · Udambu` : 'Udambu'; };
+const img3d = (k, cls = '') => `<img class="${cls}" data-3d="${k}" alt="">`;
+const eyebrow = (t) => `<p class="eyebrow">${esc(t)}</p>`;
 
-// picture card for a part (real 3D model snapshot)
-const partCard = (p, extra = '') => `<a class="pcard" href="#/part/${p.key}" style="--sys:${SYS[p.sys].color}" ${extra}>
-  <img src="img/3d/${p.key}.jpg" alt="" loading="lazy"><span class="pcard-name">${esc(p.name)}</span></a>`;
+// picture card for a part (its 3D model)
+const partCard = (p) => `<a class="pcard" href="#/part/${p.key}" style="--sys:${SYS[p.sys].color}">
+  <span class="pcard-art">${img3d(p.key)}</span><span class="pcard-text"><span class="pcard-sys">${esc(SYS[p.sys].name)}</span><span class="pcard-name">${esc(p.name)}</span></span></a>`;
 
-// ---------- Home: the body map ----------
+const LAYERS = [
+  { key: 'organs', name: 'Organs', icon: 'heart' }, { key: 'bones', name: 'Bones', icon: 'bone' }, { key: 'muscles', name: 'Muscles', icon: 'muscle' },
+  { key: 'nerves', name: 'Nerves', icon: 'zap' }, { key: 'blood', name: 'Blood', icon: 'drop' }, { key: 'outside', name: 'Skin', icon: 'person' },
+];
+
+// ---------- Home: the 3D body ----------
 function home() {
   setTitle('');
-  let layer = store.get('layer', 'organs');
+  let layer = store.get('layer3d', 'organs');
   app.innerHTML = `
     <section class="home">
-      <div class="home-head">
-        <h1 class="heading-1">Tap your body!</h1>
-        ${speakBtn('ui-home', 'Tap a part of the body to learn about it. Change the picture with the buttons.')}
-      </div>
-      <div class="layers" role="tablist" aria-label="What to show">
-        ${LAYERS.map(l => `<button class="layer" role="tab" data-layer="${l.key}" aria-selected="${l.key === layer}">${icon(l.icon)}<span>${l.name}</span></button>`).join('')}
-      </div>
-      <div class="map-wrap"><div class="map" id="map"></div><div class="map-pop" id="pop" hidden></div></div>
-      <div class="chips" id="chips"></div>
+      <header class="home-head">
+        <div>${eyebrow('Human body atlas')}<h1 class="display">Explore the human body</h1>
+          <p class="lede">Turn the body with your finger. Tap any part to see what it does.</p></div>
+        ${speakBtn('ui-home', 'Turn the body with your finger. Tap any part to see what it does.', 'Listen')}
+      </header>
+      <div class="layers" role="tablist" aria-label="Show">${LAYERS.map(l => `<button class="layer" role="tab" data-layer="${l.key}" aria-selected="${l.key === layer}">${icon(l.icon)}<span>${l.name}</span></button>`).join('')}</div>
+      <div class="stage" id="stage3d"><div class="stage-pop" id="pop" hidden></div><p class="stage-hint">${icon('cube')} Drag to turn · Tap a part</p></div>
+      <aside class="side"><p class="eyebrow" id="side-title"></p><div class="plist" id="plist"></div></aside>
     </section>`;
+  const pop = $('#pop');
+  const view = Anatomy.body($('#stage3d'), { layer, onPick: (k, pt) => {
+    if (!k || !PART[k]) { pop.hidden = true; return; }
+    haptic(); const p = PART[k];
+    pop.innerHTML = `<a href="#/part/${k}">${img3d(k)}<span><small>${esc(SYS[p.sys].name)}</small><b>${esc(p.name)}</b></span>${icon('next')}</a>`;
+    Anatomy.paint(pop); pop.hidden = false;
+    const w = $('#stage3d').clientWidth; pop.style.left = Math.min(Math.max(pt.x, 120), w - 120) + 'px'; pop.style.top = Math.max(pt.y, 70) + 'px';
+    say('name-' + k, p.name);
+  } });
+  onLeave(view.destroy);
   const paint = () => {
-    $('#map').innerHTML = bodyMapSVG(layer);
-    $('#chips').innerHTML = layerParts(layer).map(k => PART[k] && `<a class="chip" href="#/part/${k}"><img src="img/3d/${k}.jpg" alt="">${esc(PART[k].name)}</a>`).join('');
+    const keys = Anatomy.LAYER_PARTS[layer].filter(k => PART[k]);
+    $('#side-title').textContent = `${LAYERS.find(l => l.key === layer).name} · ${keys.length} parts`;
+    $('#plist').innerHTML = keys.map(k => `<a class="prow" href="#/part/${k}">${img3d(k)}<span>${esc(PART[k].name)}</span>${icon('next')}</a>`).join('');
+    Anatomy.paint($('#plist'));
     document.querySelectorAll('.layer').forEach(b => b.setAttribute('aria-selected', String(b.dataset.layer === layer)));
-    $('#pop').hidden = true;
+    pop.hidden = true;
   };
   paint();
   app.querySelector('.layers').onclick = (e) => {
     const b = e.target.closest('[data-layer]'); if (!b) return;
-    haptic(); layer = b.dataset.layer; store.set('layer', layer); paint();
+    haptic(); layer = b.dataset.layer; store.set('layer3d', layer); view.show(layer); paint();
     say('layer-' + layer, LAYERS.find(l => l.key === layer).name);
-  };
-  // first tap shows the name + says it, second tap (or the bubble) opens the part
-  let picked = null;
-  $('#map').onclick = (e) => {
-    const hot = e.target.closest('[data-part]'); const pop = $('#pop');
-    if (!hot) { pop.hidden = true; picked = null; return; }
-    const p = PART[hot.dataset.part]; if (!p) return;
-    haptic();
-    if (picked === p.key) { location.hash = '#/part/' + p.key; return; }
-    picked = p.key;
-    document.querySelectorAll('.bm-hot.on').forEach(n => n.classList.remove('on'));
-    document.querySelectorAll(`[data-part="${p.key}"]`).forEach(n => n.classList.add('on'));
-    const r = $('#map').getBoundingClientRect(), hr = hot.getBoundingClientRect();
-    pop.innerHTML = `<a href="#/part/${p.key}"><img src="img/3d/${p.key}.jpg" alt=""><b>${esc(p.name)}</b>${icon('next')}</a>`;
-    pop.hidden = false;
-    const x = Math.min(Math.max(hr.left + hr.width / 2 - r.left, 90), r.width - 90);
-    pop.style.left = x + 'px'; pop.style.top = Math.max(hr.top - r.top - 8, 40) + 'px';
-    say('name-' + p.key, p.name);
   };
 }
 
-// ---------- All parts, by body team ----------
+// ---------- All parts, by body system ----------
 function partsPage() {
-  setTitle('Parts');
+  setTitle('Body parts');
   app.innerHTML = `<section class="page">
-    <div class="page-head"><h1 class="heading-1">All body parts</h1>${speakBtn('ui-parts', 'Here are all the parts of your body. Tap a picture to explore it.')}</div>
-    <nav class="sysnav" aria-label="Body teams">${SYSTEMS.map(s => `<a href="#sys-${s.key}" style="--sys:${s.color}">${esc(s.name)}</a>`).join('')}</nav>
+    <header class="page-head"><div>${eyebrow(`${PARTS.length} parts · ${SYSTEMS.length} systems`)}<h1 class="display">Body parts</h1></div>${speakBtn('ui-parts', 'Here are all the parts of your body. Tap a picture to explore it.', 'Listen')}</header>
+    <nav class="sysnav" aria-label="Body systems">${SYSTEMS.map(s => `<a href="#sys-${s.key}" style="--sys:${s.color}"><i></i>${esc(s.name)}</a>`).join('')}</nav>
     ${SYSTEMS.map(s => `<section class="sys" id="sys-${s.key}" style="--sys:${s.color}">
-      <div class="sys-head"><h2 class="heading-2">${esc(s.name)}</h2>${speakBtn('sys-' + s.key, s.name + '. ' + s.say)}</div>
-      <div class="pgrid">${PARTS.filter(p => p.sys === s.key).map(p => partCard(p)).join('')}</div></section>`).join('')}
+      <div class="sys-head"><div><h2 class="heading-2">${esc(s.name)}</h2><p class="muted">${esc(s.say)}</p></div>${speakBtn('sys-' + s.key, s.name + '. ' + s.say, 'Listen', true)}</div>
+      <div class="pgrid">${PARTS.filter(p => p.sys === s.key).map(partCard).join('')}</div></section>`).join('')}
   </section>`;
   app.querySelector('.sysnav').onclick = (e) => { const a = e.target.closest('a'); if (!a) return; e.preventDefault(); document.querySelector(a.getAttribute('href')).scrollIntoView({ behavior: 'smooth' }); };
 }
@@ -155,227 +158,266 @@ function partPage(key) {
   const prev = team[(i - 1 + team.length) % team.length], next = team[(i + 1) % team.length];
   app.innerHTML = `<article class="part" style="--sys:${s.color}">
     <header class="part-hero">
-      <span class="sys-badge">${esc(s.name)}</span>
-      <div class="part-title"><h1 class="display-lg">${esc(p.name)}</h1>${speakBtn(key + '-say', p.name + '. ' + p.say, 'Hear about the ' + p.name)}</div>
-      <p class="part-say body-lg">${esc(p.say)}</p>
+      <div class="hero-model" id="spin"><p class="stage-hint">${icon('cube')} Drag to turn</p></div>
+      <div class="hero-text">
+        ${eyebrow(s.name)}
+        <div class="part-title"><h1 class="display">${esc(p.name)}</h1>${speakBtn(key + '-say', p.name + '. ' + p.say, 'Listen')}</div>
+        <p class="lede">${esc(p.say)}</p>
+        <nav class="jump">${[['how', 'How it works'], ['more', 'What it does'], ['facts', 'Facts'], ['care', 'Care']].map(([id, t]) => `<a href="#${id}" data-jump="${id}">${t}</a>`).join('')}</nav>
+      </div>
     </header>
 
-    <div class="tiles">
-      <button class="tile" data-go="m3d">${icon('cube')}<span>3D</span></button>
-      <button class="tile" data-go="demo">${icon('play')}<span>Watch</span></button>
-      <button class="tile" data-go="facts">${icon('bulb')}<span>Facts</span></button>
-      <button class="tile" data-go="care">${icon('shield')}<span>Healthy</span></button>
-    </div>
-
-    <section class="card m3d" id="m3d">
-      <h2 class="sec-title">${icon('cube')} Real 3D</h2>
-      <div class="viewer" id="viewer">
-        <button class="viewer-start" aria-label="Open the 3D ${esc(p.name)}">
-          <img src="img/3d/${key}.jpg" alt=""><span class="viewer-cta">${icon('cube')} Tap to turn it</span></button>
-      </div>
-      ${m ? `<p class="credit">3D model “${esc(m.name)}” by ${esc(m.by)} on Sketchfab${m.license ? ' · ' + esc(m.license) : ''}</p>` : ''}
+    <section class="block" id="how">
+      <div class="block-head"><span class="num">01</span><h2 class="heading-2">How it works</h2><button class="k-iconbtn playpause" id="pp" aria-label="Pause">${icon('pause')}</button></div>
+      <div class="demo-grid"><div class="demo-stage" id="stage">${demoSVG(p.demo)}</div>
+      <ol class="steps" id="steps">${p.how.map((t, n) => `<li><button data-say="${key}-how-${n}" data-text="${esc(t)}"><span class="n">${n + 1}</span><span>${esc(t)}</span></button></li>`).join('')}</ol></div>
     </section>
 
-    <section class="card demo" id="demo">
-      <div class="sec-row"><h2 class="sec-title">${icon('play')} Watch it work</h2>
-        <button class="k-iconbtn playpause" id="pp" aria-label="Pause">${icon('pause')}</button></div>
-      <div class="demo-stage" id="stage">${demoSVG(p.demo)}</div>
-      <ol class="steps" id="steps">${p.how.map((t, n) => `<li><button data-say="${key}-how-${n}" data-text="${esc(t)}"><span class="num">${n + 1}</span>${esc(t)}</button></li>`).join('')}</ol>
+    <section class="block" id="more">
+      <div class="block-head"><span class="num">02</span><h2 class="heading-2">What it does</h2>${speakBtn(key + '-more', p.more, 'Listen')}</div>
+      <p class="body-lg prose">${esc(p.more)}</p>
     </section>
 
-    <section class="card more">
-      <div class="sec-row"><h2 class="sec-title">${icon('sparkle')} What it does</h2>${speakBtn(key + '-more', p.more, 'Read it to me')}</div>
-      <p class="body-lg">${esc(p.more)}</p>
+    <section class="block" id="facts">
+      <div class="block-head"><span class="num">03</span><h2 class="heading-2">Facts</h2></div>
+      <ul class="rows">${p.facts.map((f, n) => `<li><button data-say="${key}-fact-${n}" data-text="${esc(f)}">${icon('bulb')}<span>${esc(f)}</span>${icon('speaker', 'row-say')}</button></li>`).join('')}</ul>
     </section>
 
-    <section class="card" id="facts">
-      <h2 class="sec-title">${icon('bulb')} Wow facts</h2>
-      <ul class="facts">${p.facts.map((f, n) => `<li><button data-say="${key}-fact-${n}" data-text="${esc(f)}">${icon('star')}<span>${esc(f)}</span></button></li>`).join('')}</ul>
+    <section class="block" id="care">
+      <div class="block-head"><span class="num">04</span><h2 class="heading-2">Keeping it healthy</h2></div>
+      <ul class="rows care">${p.care.map((c, n) => `<li><button data-say="${key}-care-${n}" data-text="${esc(c)}">${icon('check')}<span>${esc(c)}</span>${icon('speaker', 'row-say')}</button></li>`).join('')}</ul>
     </section>
 
-    <section class="card" id="care">
-      <h2 class="sec-title">${icon('shield')} Keep it healthy</h2>
-      <ul class="care">${p.care.map((c, n) => `<li><button data-say="${key}-care-${n}" data-text="${esc(c)}">${icon('check')}<span>${esc(c)}</span></button></li>`).join('')}</ul>
-    </section>
+    ${p.ill.length ? `<section class="block">
+      <div class="block-head"><span class="num">05</span><h2 class="heading-2">Illnesses</h2></div>
+      <div class="ill-chips">${p.ill.map(k => ILL[k] && `<a class="ill-chip" href="#/ill/${k}">${icon(kindIcon(ILL[k]))}${esc(ILL[k].name)}${icon('next')}</a>`).join('')}</div>
+    </section>` : ''}
 
-    ${p.ill.length ? `<section class="card">
-      <h2 class="sec-title">${icon('germ')} When it gets sick</h2>
-      <div class="ill-chips">${p.ill.map(k => ILL[k] && `<a class="ill-chip" href="#/ill/${k}">${icon(kindIcon(ILL[k]))}${esc(ILL[k].name)}</a>`).join('')}</div>
+    ${m ? `<section class="block">
+      <div class="block-head"><span class="num">${p.ill.length ? '06' : '05'}</span><h2 class="heading-2">Scientific 3D model</h2></div>
+      <div class="viewer" id="viewer"><button class="viewer-start">${img3d(key)}<span class="viewer-cta">${icon('cube')} Open detailed model</span></button></div>
+      <p class="credit">“${esc(m.name)}” by ${esc(m.by)} on Sketchfab${m.license ? ' · ' + esc(m.license) : ''}. Needs the internet.</p>
     </section>` : ''}
 
     <nav class="prevnext">
-      <a href="#/part/${prev.key}" aria-label="Before: ${esc(prev.name)}">${icon('back')}<img src="img/3d/${prev.key}.jpg" alt=""><span>${esc(prev.name)}</span></a>
-      <a href="#/part/${next.key}" aria-label="Next: ${esc(next.name)}"><span>${esc(next.name)}</span><img src="img/3d/${next.key}.jpg" alt="">${icon('next')}</a>
+      <a href="#/part/${prev.key}">${icon('back')}<span><small>Previous</small>${esc(prev.name)}</span></a>
+      <a href="#/part/${next.key}"><span><small>Next</small>${esc(next.name)}</span>${icon('next')}</a>
     </nav>
   </article>`;
 
-  app.querySelector('.tiles').onclick = (e) => {
-    const t = e.target.closest('[data-go]'); if (!t) return; haptic();
-    const go = t.dataset.go; document.getElementById(go).scrollIntoView({ behavior: 'smooth', block: 'start' });
-    if (go === 'm3d') open3D();
-  };
-  const open3D = () => {
-    if (!m || $('#viewer iframe')) return;
+  const sp = Anatomy.spin($('#spin'), key); if (sp) onLeave(sp.destroy);
+  app.querySelector('.jump').onclick = (e) => { const a = e.target.closest('[data-jump]'); if (!a) return; e.preventDefault(); document.getElementById(a.dataset.jump).scrollIntoView({ behavior: 'smooth' }); };
+  const vs = $('.viewer-start');
+  if (vs) vs.onclick = () => { haptic();
     $('#viewer').innerHTML = `<iframe title="${esc(p.name)} in 3D" allow="autoplay; fullscreen; xr-spatial-tracking" allowfullscreen
-      src="https://sketchfab.com/models/${m.uid}/embed?autostart=1&preload=1&ui_theme=dark&ui_infos=0&ui_watermark=0&ui_watermark_link=0&ui_controls=1&ui_stop=0&ui_inspector=0&ui_settings=0&ui_vr=0&ui_ar=0&ui_help=0&ui_annotations=0&dnt=1"></iframe>
-      <p class="viewer-hint">${icon('cube')} Drag to turn · pinch to zoom</p>`;
-    say('ui-3d', 'Drag with your finger to turn it around.');
-  };
-  $('.viewer-start').onclick = () => { haptic(); open3D(); };
+      src="https://sketchfab.com/models/${m.uid}/embed?autostart=1&preload=1&ui_theme=dark&ui_infos=0&ui_watermark=0&ui_watermark_link=0&ui_controls=1&ui_stop=0&ui_inspector=0&ui_settings=0&ui_vr=0&ui_ar=0&ui_help=0&ui_annotations=0&dnt=1"></iframe>`;
+    say('ui-3d', 'Drag with your finger to turn it around.'); };
 
   // step captions follow the 8-second animation
   const svg = $('#stage svg'), steps = [...document.querySelectorAll('#steps li')];
-  let t0 = performance.now(), paused = false, raf;
-  const tick = () => {
-    const n = Math.floor(((svg.getCurrentTime?.() ?? (performance.now() - t0) / 1000) % DEMO_CYCLE) / (DEMO_CYCLE / 4));
-    steps.forEach((li, k) => li.classList.toggle('on', k === n));
-    raf = requestAnimationFrame(tick);
-  };
-  tick();
-  $('#pp').onclick = () => {
-    paused = !paused; haptic();
-    paused ? svg.pauseAnimations() : svg.unpauseAnimations();
-    $('#pp').innerHTML = icon(paused ? 'play' : 'pause'); $('#pp').setAttribute('aria-label', paused ? 'Play' : 'Pause');
-  };
-  cleanup = () => cancelAnimationFrame(raf);
-  // read the part out loud as soon as it opens (kids arrive here by tapping, so sound is allowed)
-  setTimeout(() => say(key + '-say', p.name + '. ' + p.say, $('.part-title .speak')), 250);
+  let paused = false, raf;
+  const tick = () => { const n = Math.floor((svg.getCurrentTime() % DEMO_CYCLE) / (DEMO_CYCLE / 4)); steps.forEach((li, k) => li.classList.toggle('on', k === n)); raf = requestAnimationFrame(tick); };
+  tick(); onLeave(() => cancelAnimationFrame(raf));
+  $('#pp').onclick = () => { paused = !paused; haptic(); paused ? svg.pauseAnimations() : svg.unpauseAnimations();
+    $('#pp').innerHTML = icon(paused ? 'play' : 'pause'); $('#pp').setAttribute('aria-label', paused ? 'Play' : 'Pause'); };
+  setTimeout(() => say(key + '-say', p.name + '. ' + p.say, $('.part-title .speak')), 300);
 }
 
 const kindIcon = (ill) => ill.kind === 'hurt' ? 'hurt' : ill.kind === 'germ' ? 'germ' : 'heart';
 const MOSQUITO = new Set(['malaria', 'dengue']);
+const KIND_NAME = { germ: 'Caused by germs', body: 'Inside the body', hurt: 'Injury' };
 
-// ---------- Sickness ----------
+// ---------- Illnesses ----------
 function sickPage() {
-  setTitle('Sickness');
+  setTitle('Health');
   let f = store.get('sickFilter', 'all');
-  const kinds = [['all', 'All', 'grid'], ['germ', 'Germs', 'germ'], ['body', 'Body', 'heart'], ['hurt', 'Hurts', 'hurt']];
+  const kinds = [['all', 'All'], ['germ', 'Germs'], ['body', 'Inside the body'], ['hurt', 'Injuries']];
   app.innerHTML = `<section class="page">
-    <div class="page-head"><h1 class="heading-1">When we get sick</h1>${speakBtn('ui-sick', 'Sometimes our body gets sick or hurt. Tap a picture to learn about it, and how to stay healthy.')}</div>
-    <div class="k-alert grownup">${icon('doctor')}<div><b>Feeling sick? Tell a grown-up.</b><br>This app helps you learn. Only a doctor can say what is wrong.</div>${speakBtn('ui-grownup', 'Feeling sick? Tell a grown-up. Only a doctor can say what is wrong.')}</div>
-    <div class="layers filter" role="tablist">${kinds.map(([k, n, ic]) => `<button class="layer" data-k="${k}" aria-selected="${k === f}">${icon(ic)}<span>${n}</span></button>`).join('')}</div>
-    <div class="igrid" id="ig"></div></section>`;
+    <header class="page-head"><div>${eyebrow(`${ILLNESSES.length} conditions`)}<h1 class="display">Common illnesses</h1></div>${speakBtn('ui-sick', 'Sometimes our body gets sick or hurt. Tap one to learn about it, and how to stay healthy.', 'Listen')}</header>
+    <div class="note">${icon('doctor')}<p><b>Feeling unwell? Tell a grown-up.</b> This app is for learning. Only a doctor can say what is wrong.</p>${speakBtn('ui-grownup', 'Feeling sick? Tell a grown-up. Only a doctor can say what is wrong.', 'Listen', true)}</div>
+    <div class="seg" role="tablist">${kinds.map(([k, n]) => `<button data-k="${k}" aria-selected="${k === f}">${n}</button>`).join('')}</div>
+    <div class="ilist" id="ig"></div></section>`;
   const paint = () => {
-    $('#ig').innerHTML = ILLNESSES.filter(i => f === 'all' || i.kind === f).map(i => `<a class="icard kind-${i.kind}" href="#/ill/${i.key}">
-      <span class="icard-ic">${icon(kindIcon(i))}</span><span class="icard-name">${esc(i.name)}</span>
-      ${i.spread ? `<span class="tag">${icon('people')} spreads</span>` : MOSQUITO.has(i.key) ? `<span class="tag">${icon('mosquito')} mosquito</span>` : ''}</a>`).join('');
-    document.querySelectorAll('.filter .layer').forEach(b => b.setAttribute('aria-selected', String(b.dataset.k === f)));
+    $('#ig').innerHTML = ILLNESSES.filter(i => f === 'all' || i.kind === f).map(i => `<a class="irow kind-${i.kind}" href="#/ill/${i.key}">
+      <span class="irow-art">${img3d(i.parts[0])}</span>
+      <span class="irow-text"><b>${esc(i.name)}</b><small>${esc(i.parts.map(k => PART[k]?.name).filter(Boolean).slice(0, 2).join(' · '))}</small></span>
+      ${i.spread ? `<span class="tag">${icon('people')} Spreads</span>` : MOSQUITO.has(i.key) ? `<span class="tag">${icon('mosquito')} Mosquito</span>` : ''}${icon('next')}</a>`).join('');
+    Anatomy.paint($('#ig'));
+    document.querySelectorAll('.seg button').forEach(b => b.setAttribute('aria-selected', String(b.dataset.k === f)));
   };
   paint();
-  app.querySelector('.filter').onclick = (e) => { const b = e.target.closest('[data-k]'); if (!b) return; haptic(); f = b.dataset.k; store.set('sickFilter', f); paint(); };
+  app.querySelector('.seg').onclick = (e) => { const b = e.target.closest('[data-k]'); if (!b) return; haptic(); f = b.dataset.k; store.set('sickFilter', f); paint(); };
 }
 
 function illPage(key) {
   const i = ILL[key]; if (!i) return (location.hash = '#/sick');
   setTitle(i.name);
-  const list = (arr, id, ic) => `<ul class="care">${arr.map((t, n) => `<li><button data-say="${key}-${id}-${n}" data-text="${esc(t)}">${icon(ic)}<span>${esc(t)}</span></button></li>`).join('')}</ul>`;
+  const list = (arr, id, ic) => `<ul class="rows">${arr.map((t, n) => `<li><button data-say="${key}-${id}-${n}" data-text="${esc(t)}">${icon(ic)}<span>${esc(t)}</span>${icon('speaker', 'row-say')}</button></li>`).join('')}</ul>`;
   app.innerHTML = `<article class="part ill kind-${i.kind}">
     <header class="part-hero">
-      <span class="sys-badge">${i.kind === 'germ' ? 'Caused by germs' : i.kind === 'hurt' ? 'An injury' : 'Happens inside the body'}</span>
-      <div class="part-title"><h1 class="display-lg">${esc(i.name)}</h1>${speakBtn(key + '-say', i.name + '. ' + i.say)}</div>
-      <p class="part-say body-lg">${esc(i.say)}</p>
-      <div class="badges">${i.spread ? `<span class="k-badge k-badge-warning">${icon('people')} It can spread</span>` : MOSQUITO.has(key) ? `<span class="k-badge k-badge-warning">${icon('mosquito')} Mosquitoes spread it</span>` : `<span class="k-badge k-badge-success">${icon('shield')} You can’t catch it from a friend</span>`}</div>
+      <div class="hero-model" id="spin"></div>
+      <div class="hero-text">
+        ${eyebrow(KIND_NAME[i.kind])}
+        <div class="part-title"><h1 class="display">${esc(i.name)}</h1>${speakBtn(key + '-say', i.name + '. ' + i.say, 'Listen')}</div>
+        <p class="lede">${esc(i.say)}</p>
+        <p class="badges">${i.spread ? `<span class="k-badge k-badge-warning">${icon('people')} Can spread to others</span>` : MOSQUITO.has(key) ? `<span class="k-badge k-badge-warning">${icon('mosquito')} Spread by mosquitoes</span>` : `<span class="k-badge k-badge-success">${icon('shield')} Does not spread to friends</span>`}</p>
+      </div>
     </header>
-    <section class="card"><h2 class="sec-title">${icon('bulb')} Signs</h2>${list(i.signs, 'sign', 'sparkle')}</section>
-    <section class="card"><h2 class="sec-title">${icon('heart')} Getting better</h2>${list(i.better, 'better', 'check')}</section>
-    <section class="card"><h2 class="sec-title">${icon('shield')} Stay safe</h2>${list(i.safe, 'safe', 'shield')}</section>
-    <section class="card"><h2 class="sec-title">${icon('person')} Body parts it affects</h2><div class="pgrid small">${i.parts.map(k => PART[k] && partCard(PART[k])).join('')}</div></section>
-    <div class="k-alert grownup">${icon('doctor')}<div><b>Feeling sick? Tell a grown-up.</b><br>Only a doctor can say what is wrong and what medicine you need.</div></div>
+    <section class="block"><div class="block-head"><span class="num">01</span><h2 class="heading-2">Signs</h2></div>${list(i.signs, 'sign', 'sparkle')}</section>
+    <section class="block"><div class="block-head"><span class="num">02</span><h2 class="heading-2">Getting better</h2></div>${list(i.better, 'better', 'heart')}</section>
+    <section class="block"><div class="block-head"><span class="num">03</span><h2 class="heading-2">Staying safe</h2></div>${list(i.safe, 'safe', 'shield')}</section>
+    <section class="block"><div class="block-head"><span class="num">04</span><h2 class="heading-2">Body parts affected</h2></div><div class="pgrid small">${i.parts.map(k => PART[k] && partCard(PART[k])).join('')}</div></section>
+    <div class="note">${icon('doctor')}<p><b>Feeling unwell? Tell a grown-up.</b> Only a doctor can say what is wrong and what medicine you need.</p></div>
   </article>`;
-  setTimeout(() => say(key + '-say', i.name + '. ' + i.say, $('.part-title .speak')), 250);
+  const sp = Anatomy.spin($('#spin'), i.parts[0]); if (sp) onLeave(sp.destroy);
+  setTimeout(() => say(key + '-say', i.name + '. ' + i.say, $('.part-title .speak')), 300);
 }
 
-// ---------- Play ----------
+// ---------- Quiz & games ----------
 function playPage() {
-  setTitle('Play');
+  setTitle('Quiz');
   const best = store.get('best', {});
+  const card = (href, k, title, sub, id, lead) => `<a class="game${lead ? ' lead' : ''}" href="${href}"><span class="game-art">${img3d(k)}</span>
+    <span class="game-text"><b>${title}</b><span>${sub}</span>${best[id] != null ? `<small>Best: ${best[id]} / 10</small>` : ''}</span>${icon('next')}</a>`;
   app.innerHTML = `<section class="page">
-    <div class="page-head"><h1 class="heading-1">Let’s play!</h1>${speakBtn('ui-play', 'Pick a game. Find it: find the body part on the body. What does this? Watch and pick the right part.')}</div>
+    <header class="page-head"><div>${eyebrow('Learn by playing')}<h1 class="display">Quiz</h1></div>${speakBtn('ui-play', 'Pick a game. In the body quiz, answer questions and learn about every part. In find the part, tap it on the body. In what does this, watch and pick the part.', 'Listen')}</header>
     <div class="games">
-      <a class="game" href="#/play/find">${icon('person', 'big')}<b>Find it!</b><span>Tap the right part</span>${best.find ? `<span class="best">${icon('star')} ${best.find}/10</span>` : ''}</a>
-      <a class="game" href="#/play/which">${icon('play', 'big')}<b>Who does this?</b><span>Watch, then pick</span>${best.which ? `<span class="best">${icon('star')} ${best.which}/10</span>` : ''}</a>
+      ${card('#/play/quiz', 'heart', 'Body quiz', '10 questions. Learn something new after every answer.', 'quiz', true)}
+      ${card('#/play/find', 'skeleton', 'Find the part', 'Tap the right part on the 3D body.', 'find')}
+      ${card('#/play/which', 'lungs', 'What does this?', 'Watch the animation, then pick the part.', 'which')}
     </div></section>`;
 }
 
 const shuffle = (a) => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.random() * (i + 1) | 0; [a[i], a[j]] = [a[j], a[i]]; } return a; };
-// which layer shows each part best, for the Find game
-const FIND_LAYER = {};
-for (const l of ['organs', 'bones', 'outside', 'nerves', 'blood', 'muscles']) for (const k of layerParts(l)) FIND_LAYER[k] ??= l;
-
-function scoreBar(score, round) { return `<div class="score"><span>${Array.from({ length: 10 }, (_, n) => `<i class="${n < round ? (n < score.length && score[n] ? 'ok' : 'no') : ''}"></i>`).join('')}</span></div>`; }
+const scoreBar = (score, round) => `<div class="score" aria-label="Question ${round + 1} of 10">${Array.from({ length: 10 }, (_, n) => `<i class="${n < score.length ? (score[n] ? 'ok' : 'no') : n === round ? 'now' : ''}"></i>`).join('')}</div>`;
 function finish(game, score) {
   const n = score.filter(Boolean).length, best = store.get('best', {});
-  if (!best[game] || n > best[game]) { best[game] = n; store.set('best', best); }
-  app.querySelector('.gamebox').innerHTML = `<div class="done"><div class="stars">${Array.from({ length: 3 }, (_, k) => icon('star', n >= [3, 6, 9][k] ? 'lit' : '')).join('')}</div>
-    <h2 class="display-lg">${n} / 10</h2><p class="body-lg">${n >= 8 ? 'Super body explorer!' : n >= 5 ? 'Great job!' : 'Good try! Play again?'}</p>
+  if (best[game] == null || n > best[game]) { best[game] = n; store.set('best', best); }
+  const msg = n >= 8 ? 'Excellent. You know your body well.' : n >= 5 ? 'Well done. You learned a lot.' : 'Good try. Play again to learn more.';
+  app.querySelector('.gamebox').innerHTML = `<div class="done"><p class="eyebrow">Your score</p><p class="done-score">${n}<span>/10</span></p>
+    <div class="stars">${[3, 6, 9].map(t => icon('star', n >= t ? 'lit' : '')).join('')}</div><p class="lede">${msg}</p>
     <div class="done-actions"><button class="k-btn k-btn-primary k-btn-lg" id="again">${icon('refresh')} Play again</button><a class="k-btn k-btn-outline k-btn-lg" href="#/play">All games</a></div></div>`;
-  confetti(); Sound.win();
-  say('ui-score', `You got ${n} out of 10. ${n >= 8 ? 'Super body explorer!' : n >= 5 ? 'Great job!' : 'Good try!'}`);
+  if (n >= 5) confetti(); Sound.win();
+  say('ui-score-' + n, `You got ${n} out of 10. ${msg}`);
   $('#again').onclick = () => render();
 }
 
-function findGame() {
-  setTitle('Find it!');
-  const pool = shuffle(Object.keys(FIND_LAYER).filter(k => PART[k])).slice(0, 10), score = [];
-  let round = 0, locked = false;
+// lesson card shown after every quiz answer
+function lesson(box, k, right, text, onNext, last, sayId, answer) {
+  const p = PART[k];
+  box.innerHTML = `<div class="lesson ${right ? 'right' : 'wrong'}">
+    <p class="verdict">${icon(right ? 'check' : 'sparkle')} ${right ? 'Correct' : `The answer is ${esc(answer || 'the ' + p.name.toLowerCase())}`}</p>
+    <div class="lesson-body"><div class="lesson-model" id="lmodel"></div>
+      <div><h3 class="heading-2">${esc(p.name)}</h3><p class="body-lg">${esc(text)}</p>
+      <div class="lesson-actions">${speakBtn(sayId, text, 'Listen')}<a class="k-btn k-btn-outline" href="#/part/${k}">Learn more</a>
+      <button class="k-btn k-btn-primary k-btn-lg" id="next">${last ? 'See score' : 'Next question'} ${icon('next')}</button></div></div></div></div>`;
+  const sp = Anatomy.spin($('#lmodel'), k); if (sp) onLeave(sp.destroy);
+  $('#next').onclick = () => { haptic(); sp?.destroy(); onNext(); };
+  box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function quizGame() {
+  setTitle('Body quiz');
+  const qs = [...shuffle(QUIZ.filter(q => q.a && !q.opts)).slice(0, 5), ...shuffle(QUIZ.filter(q => q.pic)).slice(0, 2), ...shuffle(QUIZ.filter(q => q.opts)).slice(0, 3)];
+  const order = shuffle(qs), score = [];
+  let round = 0;
   app.innerHTML = `<section class="page gamebox"></section>`;
   const ask = () => {
-    if (round >= 10) return finish('find', score);
-    const k = pool[round], p = PART[k], layer = FIND_LAYER[k]; locked = false;
-    app.querySelector('.gamebox').innerHTML = `${scoreBar(score, round)}
-      <div class="ask"><span>Find the</span><b>${esc(p.name)}</b>${speakBtn('find-' + k, 'Find the ' + p.name + '!')}</div>
-      <div class="map-wrap game-map"><div class="map" id="gmap">${bodyMapSVG(layer)}</div></div>`;
-    say('find-' + k, 'Find the ' + p.name + '!');
-    $('#gmap').onclick = (e) => {
-      const hot = e.target.closest('[data-part]'); if (!hot || locked) return;
-      if (hot.dataset.part === k) {
-        locked = true; score.push(true); haptic('success'); Sound.yes(); confetti(e.clientX, e.clientY);
-        document.querySelectorAll(`#gmap [data-part="${k}"]`).forEach(n => n.classList.add('on', 'right'));
-        setTimeout(() => { round++; ask(); }, 1600);
-      } else {
-        haptic('error'); Sound.no(); hot.classList.add('shake'); setTimeout(() => hot.classList.remove('shake'), 500);
-        if (score.length === round) score.push(false);
-        say('name-' + hot.dataset.part, 'That is the ' + (PART[hot.dataset.part]?.name || 'wrong part') + '. Try again!');
-        app.querySelector('.score').outerHTML = scoreBar(score, round + 1);
-      }
+    if (round >= 10) return finish('quiz', score);
+    const q = order[round], box = app.querySelector('.gamebox'); let answered = false;
+    const id = `quiz-${QUIZ.indexOf(q)}`;
+    let prompt, opts, correct, learnKey, learnText;
+    if (q.opts) {                                   // text answers
+      prompt = q.q; correct = q.a; learnKey = q.part; learnText = q.learn;
+      opts = q.opts.map((t, n) => ({ n, html: `<span class="opt-text">${esc(t)}</span>`, say: t }));
+      opts = shuffle(opts);
+    } else {                                        // pick the part, or name the part in the picture
+      const k = q.a || q.pic, p = PART[k];
+      const others = shuffle(PARTS.filter(x => x.key !== k && x.sys !== p.sys)).slice(0, 2);
+      learnKey = k; learnText = p.say; correct = k; prompt = q.q || 'What is this body part?';
+      opts = shuffle([p, ...others]).map(o => ({ n: o.key, html: q.pic ? `<span class="opt-text">${esc(o.name)}</span>` : `${img3d(o.key)}<span>${esc(o.name)}</span>`, say: o.name }));
+    }
+    box.innerHTML = `${scoreBar(score, round)}
+      <div class="qhead"><p class="eyebrow">Question ${round + 1} of 10</p><h2 class="question">${esc(prompt)}</h2>${speakBtn(id, prompt, 'Listen')}</div>
+      ${q.pic ? `<div class="qpic">${img3d(q.pic)}</div>` : ''}
+      <div class="opts ${q.opts || q.pic ? 'text' : ''}">${opts.map(o => `<button class="opt" data-n="${o.n}">${o.html}</button>`).join('')}</div>
+      <div id="lesson"></div>`;
+    Anatomy.paint(box);
+    say(id, prompt);
+    box.querySelector('.opts').onclick = (e) => {
+      const b = e.target.closest('.opt'); if (!b || answered) return; answered = true;
+      const right = String(b.dataset.n) === String(correct);
+      score.push(right); haptic(right ? 'success' : 'error'); right ? Sound.yes() : Sound.no();
+      box.querySelectorAll('.opt').forEach(x => { x.disabled = true; if (String(x.dataset.n) === String(correct)) x.classList.add('right'); });
+      if (!right) b.classList.add('wrong'); else confetti(e.clientX, e.clientY);
+      box.querySelector('.score').outerHTML = scoreBar(score, round + 1);
+      const qi = QUIZ.indexOf(q), ans = q.opts ? q.opts[q.a] : null;
+      const vid = q.opts ? `quiz-${right ? 'ok' : 'ans'}-${qi}` : `${right ? 'ok' : 'ans'}-${learnKey}`;
+      const vtext = (right ? 'Correct! ' : q.opts ? `The answer is: ${ans}. ` : `The answer is the ${PART[learnKey].name}. `) + learnText;
+      lesson($('#lesson'), learnKey, right, learnText, () => { round++; ask(); }, round === 9, vid, ans);
+      say(vid, vtext);
     };
+  };
+  ask();
+}
+
+function findGame() {
+  setTitle('Find the part');
+  const pool = shuffle(['organs', 'bones', 'outside'].flatMap(l => Anatomy.LAYER_PARTS[l].map(k => [k, l])).filter(([k]) => PART[k]))
+    .filter(([k], i, a) => a.findIndex(x => x[0] === k) === i).slice(0, 10), score = [];
+  let round = 0, tries = 0;
+  app.innerHTML = `<section class="page gamebox">${scoreBar(score, 0)}<div class="qhead" id="ask"></div><div class="stage game-stage" id="gstage"></div><div id="lesson"></div></section>`;
+  let target, layer;
+  const view = Anatomy.body($('#gstage'), { layer: pool[0][1], onPick: (k) => {
+    if (!target || !k) return;
+    if (k === target) {
+      if (score.length === round) score.push(tries === 0);
+      haptic('success'); Sound.yes(); confetti();
+      app.querySelector('.score').outerHTML = scoreBar(score, round + 1);
+      const p = PART[target]; target = null;
+      lesson($('#lesson'), p.key, true, p.say, () => { $('#lesson').innerHTML = ''; round++; ask(); }, round === 9, 'ok-' + p.key);
+      say('ok-' + p.key, 'Correct! ' + p.say);
+    } else { tries++; haptic('error'); Sound.no(); say('name-' + k, `That is the ${PART[k]?.name || 'wrong part'}. Try again.`); }
+  } });
+  onLeave(view.destroy);
+  const ask = () => {
+    if (round >= 10) return finish('find', score);
+    [target, layer] = pool[round]; tries = 0; view.show(layer); view.reset(); view.zoomTo(target);
+    $('#ask').innerHTML = `<p class="eyebrow">Question ${round + 1} of 10</p><h2 class="question">Find the ${esc(PART[target].name.toLowerCase())}</h2>${speakBtn('find-' + target, 'Find the ' + PART[target].name, 'Listen')}`;
+    say('find-' + target, 'Find the ' + PART[target].name + '!');
   };
   ask();
 }
 
 function whichGame() {
-  setTitle('Who does this?');
+  setTitle('What does this?');
   const pool = shuffle(PARTS.filter(p => !['nerves', 'skull', 'ribs'].includes(p.key))).slice(0, 10), score = [];
   let round = 0;
   app.innerHTML = `<section class="page gamebox"></section>`;
   const ask = () => {
     if (round >= 10) return finish('which', score);
-    const p = pool[round];
-    const wrong = shuffle(PARTS.filter(x => x.demo !== p.demo && x.sys !== p.sys)).slice(0, 2);
-    const opts = shuffle([p, ...wrong]);
-    app.querySelector('.gamebox').innerHTML = `${scoreBar(score, round)}
-      <div class="ask"><span>Which part does this?</span>${speakBtn('which-' + p.key, p.how.join(' '), 'Hear the clue')}</div>
+    const p = pool[round], box = app.querySelector('.gamebox');
+    const opts = shuffle([p, ...shuffle(PARTS.filter(x => x.demo !== p.demo && x.sys !== p.sys)).slice(0, 2)]);
+    box.innerHTML = `${scoreBar(score, round)}
+      <div class="qhead"><p class="eyebrow">Question ${round + 1} of 10</p><h2 class="question">Which part does this?</h2>${speakBtn('which-' + p.key, p.how.join(' '), 'Listen to a clue')}</div>
       <div class="demo-stage">${demoSVG(p.demo)}</div>
-      <div class="opts">${opts.map(o => `<button class="opt" data-k="${o.key}"><img src="img/3d/${o.key}.jpg" alt=""><span>${esc(o.name)}</span></button>`).join('')}</div>`;
-    say('which-q', 'Which part does this?');
-    let tried = false;
-    app.querySelector('.opts').onclick = (e) => {
-      const b = e.target.closest('.opt'); if (!b || b.disabled) return;
-      if (b.dataset.k === p.key) {
-        if (!tried) score.push(true); haptic('success'); Sound.yes(); b.classList.add('right'); confetti();
-        say('name-' + p.key, p.name);
-        document.querySelectorAll('.opt').forEach(x => x.disabled = true);
-        setTimeout(() => { round++; ask(); }, 1800);
-      } else {
-        if (!tried) score.push(false); tried = true; haptic('error'); Sound.no(); b.classList.add('wrong'); b.disabled = true;
-        say('name-' + b.dataset.k, 'Not the ' + PART[b.dataset.k].name + '. Try again!');
-      }
+      <div class="opts">${opts.map(o => `<button class="opt" data-k="${o.key}">${img3d(o.key)}<span>${esc(o.name)}</span></button>`).join('')}</div><div id="lesson"></div>`;
+    Anatomy.paint(box); say('which-q', 'Which part does this?');
+    let answered = false;
+    box.querySelector('.opts').onclick = (e) => {
+      const b = e.target.closest('.opt'); if (!b || answered) return; answered = true;
+      const right = b.dataset.k === p.key; score.push(right); haptic(right ? 'success' : 'error'); right ? Sound.yes() : Sound.no();
+      box.querySelectorAll('.opt').forEach(x => { x.disabled = true; if (x.dataset.k === p.key) x.classList.add('right'); });
+      if (!right) b.classList.add('wrong'); else confetti();
+      box.querySelector('.score').outerHTML = scoreBar(score, round + 1);
+      const vid = (right ? 'ok-' : 'ans-') + p.key;
+      lesson($('#lesson'), p.key, right, p.say, () => { round++; ask(); }, round === 9, vid);
+      say(vid, (right ? 'Correct! ' : `The answer is the ${p.name}. `) + p.say);
     };
   };
   ask();
 }
 
-// ---------- Little celebrations (Web Audio, no files) ----------
 const Sound = (() => {
   let ctx;
   const tone = (f, t, d, type = 'sine', g = 0.15) => {
