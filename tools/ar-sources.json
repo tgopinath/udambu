@@ -1,0 +1,503 @@
+{
+ "brain": {
+  "uid": "0aa0e33c5c854d1bab7bac9e1c7acaec",
+  "name": "Human brain, Cerebrum & Brainstem",
+  "user": "pranktoy",
+  "by": "FrankJohansson",
+  "likes": 278,
+  "license": "CC Attribution",
+  "faces": 45296,
+  "path": "glbs/000-056/0aa0e33c5c854d1bab7bac9e1c7acaec.glb",
+  "thumb": "https://media.sketchfab.com/models/0aa0e33c5c854d1bab7bac9e1c7acaec/thumbnails/251f04372c084e688d229d414f1d4402/0abc3be70b274f3a9d5d661644061e5e.jpeg"
+ },
+ "spinal-cord": {
+  "uid": "5d39455bf3c040a6ba3ab030b7b46890",
+  "name": "Cauda Equina - 4-22",
+  "user": "aandp",
+  "by": "aandp",
+  "likes": 22,
+  "license": "CC Attribution",
+  "faces": 1077402,
+  "path": "glbs/000-142/5d39455bf3c040a6ba3ab030b7b46890.glb",
+  "thumb": "https://media.sketchfab.com/models/5d39455bf3c040a6ba3ab030b7b46890/thumbnails/01ae016942fa41fbb38306451d2a3ec6/f5d7c135b5fa4cfca163437f798a7e9d.jpeg"
+ },
+ "nerves": {
+  "uid": "22fa9afe14724d9bbcffcc1160d6c447",
+  "name": "Neuron",
+  "user": "thatdudeart",
+  "by": "Bapichu",
+  "likes": 113,
+  "license": "CC Attribution",
+  "faces": 141350,
+  "path": "glbs/000-080/22fa9afe14724d9bbcffcc1160d6c447.glb",
+  "thumb": "https://media.sketchfab.com/models/22fa9afe14724d9bbcffcc1160d6c447/thumbnails/fcfef2d8b5764488a26ff9cd229b8ab1/ca015ea2cac14b4dbb64334a40cb40cb.jpeg"
+ },
+ "eyes": {
+  "uid": "5c4565daf20e488fad8e0e4335c5c60a",
+  "name": "Eyeball - Photorealistic",
+  "user": "TrentPierce",
+  "by": "TrentPierce",
+  "likes": 102,
+  "license": "CC Attribution",
+  "faces": 10582,
+  "path": "glbs/000-091/5c4565daf20e488fad8e0e4335c5c60a.glb",
+  "thumb": "https://media.sketchfab.com/models/5c4565daf20e488fad8e0e4335c5c60a/thumbnails/91ecd1a7fedd4c1b9c1f4de52e16085b/00581b6b39674a87bde6a3c798b7b1b8.jpeg"
+ },
+ "ears": {
+  "uid": "e1f0f4b6fae54d59bdc3c6b2534eb411",
+  "name": "Human Ear Model",
+  "user": "ssavish274",
+  "by": "ssavish274",
+  "likes": 104,
+  "license": "CC Attribution",
+  "faces": 8064,
+  "path": "glbs/000-077/e1f0f4b6fae54d59bdc3c6b2534eb411.glb",
+  "thumb": "https://media.sketchfab.com/models/e1f0f4b6fae54d59bdc3c6b2534eb411/thumbnails/dd6b30f78bdd461bbb22ab4e3e2d0ddc/0c1f6a2545bc4d1b9ac4d1cf4b629f27.jpeg"
+ },
+ "nose": {
+  "uid": "fd594e7ee73a4aed90a35d79501dc6b4",
+  "name": "Nose",
+  "user": "vikrama1998",
+  "by": "Vikrama Raghuraman",
+  "likes": 11,
+  "license": "CC Attribution",
+  "faces": 143344,
+  "path": "glbs/000-106/fd594e7ee73a4aed90a35d79501dc6b4.glb",
+  "thumb": "https://media.sketchfab.com/models/fd594e7ee73a4aed90a35d79501dc6b4/thumbnails/6cb48f73a6404954a3dfcbab43f4c0fd/7c2b11aad85f49d4a29a5e367d7d6c50.jpeg",
+  "tint": [
+   0.86,
+   0.62,
+   0.52,
+   1
+  ]
+ },
+ "teeth": {
+  "uid": "b77dcbc5052e4740b87cdb1964649742",
+  "name": "Mandibular Second Molar",
+  "user": "DundeeDental",
+  "by": "University of Dundee, School of Dentistry",
+  "likes": 48,
+  "license": "CC Attribution",
+  "faces": 27476,
+  "path": "glbs/000-049/b77dcbc5052e4740b87cdb1964649742.glb",
+  "thumb": "https://media.sketchfab.com/models/b77dcbc5052e4740b87cdb1964649742/thumbnails/3780a1dd05934f73955fb1635384f30d/6d0af8fc9cd24d809b729cf8ba7b0c84.jpeg"
+ },
+ "mouth": {
+  "uid": "c4c569f0e08948e2a572007a7a5726f2",
+  "name": "Human teeth",
+  "user": "Dessen",
+  "by": "Alexander Antipov",
+  "likes": 765,
+  "license": "CC Attribution",
+  "faces": 15568,
+  "path": "glbs/000-066/c4c569f0e08948e2a572007a7a5726f2.glb",
+  "thumb": "https://media.sketchfab.com/models/c4c569f0e08948e2a572007a7a5726f2/thumbnails/66f12c992cf245d7a5ae6711121ed997/80960e0c29a548f78fd9ff4cc7793fe7.jpeg"
+ },
+ "hair-nails": {
+  "uid": "fb3e6d87c9f5465c8bd82a2313fb9e93",
+  "name": "Hair and Beard Follicle 3D",
+  "user": "yagmurmedya",
+  "by": "yagmurmedya",
+  "likes": 9,
+  "license": "CC Attribution",
+  "faces": 56364,
+  "path": "glbs/000-060/fb3e6d87c9f5465c8bd82a2313fb9e93.glb",
+  "thumb": "https://media.sketchfab.com/models/fb3e6d87c9f5465c8bd82a2313fb9e93/thumbnails/62bfe4a4fa654102869faab5c82e513f/fe44556f4527470fab595d0de3b84990.jpeg"
+ },
+ "skeleton": {
+  "uid": "4de7b96a351a4a35b1b6e5415277ff07",
+  "name": "Skeleton",
+  "user": "diegoluga",
+  "by": "Diego Luj\u00e1n Garc\u00eda",
+  "likes": 3495,
+  "license": "CC Attribution",
+  "faces": 378572,
+  "path": "glbs/000-149/4de7b96a351a4a35b1b6e5415277ff07.glb",
+  "thumb": "https://media.sketchfab.com/models/4de7b96a351a4a35b1b6e5415277ff07/thumbnails/5fddaf2e9e7242b5ad944a56f4b04b50/200x200.jpeg"
+ },
+ "skull": {
+  "uid": "f1eaaef50e5845c796d6834fd1b702e5",
+  "name": "Human Male Skull",
+  "user": "ruslangadzhiev",
+  "by": "Ruslan Gadzhiev",
+  "likes": 974,
+  "license": "CC Attribution",
+  "faces": 136712,
+  "path": "glbs/000-027/f1eaaef50e5845c796d6834fd1b702e5.glb",
+  "thumb": "https://media.sketchfab.com/models/f1eaaef50e5845c796d6834fd1b702e5/thumbnails/c621536fa510400da7c9e52e34bb098c/35df28457e25419bac38f2f9d362af30.jpeg",
+  "tint": [
+   0.92,
+   0.88,
+   0.79,
+   1
+  ]
+ },
+ "spine": {
+  "uid": "bcd9eee09ce044ef98a69c315aa792e2",
+  "name": "The human spinal column",
+  "user": "scratchi",
+  "by": "3D",
+  "likes": 328,
+  "license": "CC Attribution",
+  "faces": 332728,
+  "path": "glbs/000-133/bcd9eee09ce044ef98a69c315aa792e2.glb",
+  "thumb": "https://media.sketchfab.com/models/bcd9eee09ce044ef98a69c315aa792e2/thumbnails/22d5688d40a744f0b9ec787627ee128e/f6ea96af39c6459bb0765fc60133cfed.jpeg"
+ },
+ "ribs": {
+  "uid": "4aba9b2ced344bdf8f09656c6a298b50",
+  "name": "Human Thorax",
+  "user": "thunderpig",
+  "by": "Medulla",
+  "likes": 329,
+  "license": "CC Attribution",
+  "faces": 1690040,
+  "path": "glbs/000-095/4aba9b2ced344bdf8f09656c6a298b50.glb",
+  "thumb": "https://media.sketchfab.com/models/4aba9b2ced344bdf8f09656c6a298b50/thumbnails/e17ca817081c4051840ab78bdb7c0be5/28599fa5c74d40e8bb9baffba7f7ee0f.jpeg",
+  "tint": [
+   0.92,
+   0.88,
+   0.79,
+   1
+  ]
+ },
+ "arm-bones": {
+  "uid": "f39e683a0af342b9801adedebf2b2a9a",
+  "name": "humerus, radius, & ulna",
+  "user": "hreagers",
+  "by": "hreagers",
+  "likes": 1,
+  "license": "CC Attribution",
+  "faces": 362072,
+  "path": "glbs/000-006/f39e683a0af342b9801adedebf2b2a9a.glb",
+  "thumb": "https://media.sketchfab.com/models/f39e683a0af342b9801adedebf2b2a9a/thumbnails/188fd961bc4c4742bc2773d5c7587fcd/08e91a64f59c41d795baffabbcad01fd.jpeg",
+  "tint": [
+   0.92,
+   0.88,
+   0.79,
+   1
+  ]
+ },
+ "hand": {
+  "uid": "efd1df50e4a2457d91045a1727db7679",
+  "name": "Hand",
+  "user": "skeletonwars",
+  "by": "Team Skeleton Wars",
+  "likes": 112,
+  "license": "CC Attribution",
+  "faces": 69352,
+  "path": "glbs/000-136/efd1df50e4a2457d91045a1727db7679.glb",
+  "thumb": "https://media.sketchfab.com/models/efd1df50e4a2457d91045a1727db7679/thumbnails/eb0430eb2f9b49d4a6d7b975d5247aad/9f01faffc2ec49cc8568f251897835d2.jpeg",
+  "tint": [
+   0.92,
+   0.88,
+   0.79,
+   1
+  ]
+ },
+ "leg-bones": {
+  "uid": "0647ff9a00924f40a06e08361cea176c",
+  "name": "Human femur bone",
+  "user": "thoracotomie",
+  "by": "Tom O'Graphyx",
+  "likes": 21,
+  "license": "CC Attribution",
+  "faces": 179862,
+  "path": "glbs/000-051/0647ff9a00924f40a06e08361cea176c.glb",
+  "thumb": "https://media.sketchfab.com/models/0647ff9a00924f40a06e08361cea176c/thumbnails/39917fdc24044162821ef450fb1248fb/9aebddf7f5ab4a7f95f0faee36482ea8.jpeg"
+ },
+ "foot": {
+  "uid": "4c79b247004348548fe05587feac7f83",
+  "name": "Foot",
+  "user": "skeletonwars",
+  "by": "Team Skeleton Wars",
+  "likes": 7,
+  "license": "CC Attribution",
+  "faces": 40270,
+  "path": "glbs/000-128/4c79b247004348548fe05587feac7f83.glb",
+  "thumb": "https://media.sketchfab.com/models/4c79b247004348548fe05587feac7f83/thumbnails/1174f1c74fbb493589360fa9991888a7/e1e354a3339445f7a4ed1ffb14ed0172.jpeg",
+  "tint": [
+   0.92,
+   0.88,
+   0.79,
+   1
+  ]
+ },
+ "joints": {
+  "uid": "d8ac916a4d2149829e128a47a7cc9cb5",
+  "name": "Articulated Knee",
+  "user": "IslandMedicalProgramAnatomy",
+  "by": "IslandMedicalProgramAnatomy",
+  "likes": 14,
+  "license": "CC Attribution",
+  "faces": 300000,
+  "path": "glbs/000-065/d8ac916a4d2149829e128a47a7cc9cb5.glb",
+  "thumb": "https://media.sketchfab.com/models/d8ac916a4d2149829e128a47a7cc9cb5/thumbnails/9c6e50bc45cb4615aaf79f95cef24266/8a3f5ad7fa4a49adabaab35ef9eec13c.jpeg"
+ },
+ "heart": {
+  "uid": "3342c8c438904ee2b3b6b68fedf30531",
+  "name": "Human heart",
+  "user": "Freddan755",
+  "by": "Freddan755",
+  "likes": 66,
+  "license": "CC Attribution",
+  "faces": 54452,
+  "path": "glbs/000-095/3342c8c438904ee2b3b6b68fedf30531.glb",
+  "thumb": "https://media.sketchfab.com/models/3342c8c438904ee2b3b6b68fedf30531/thumbnails/1fda5463e8b94468a06636b38f7f4fd7/d1d9b71ed52249b4ad213bddb46d251b.jpeg"
+ },
+ "blood": {
+  "uid": "c3f0295dca6244e286a0b21999c2d0ce",
+  "name": "Red Blood Cells",
+  "user": "skaf13",
+  "by": "AK",
+  "likes": 38,
+  "license": "CC Attribution",
+  "faces": 63986,
+  "path": "glbs/000-108/c3f0295dca6244e286a0b21999c2d0ce.glb",
+  "thumb": "https://media.sketchfab.com/models/c3f0295dca6244e286a0b21999c2d0ce/thumbnails/75b7e63b313c4e8b9899ab79ad7bccf6/4f17a65e00e94a6e832c5f2d0e4005a1.jpeg",
+  "drop": [
+   "Plane"
+  ]
+ },
+ "voice-box": {
+  "uid": "a00bc73a303c46248db6a13a88b23404",
+  "name": "Anatomy of the Larynx",
+  "user": "tilt",
+  "by": "University of Dundee School of Medicine",
+  "likes": 322,
+  "license": "CC Attribution-ShareAlike",
+  "faces": 34735,
+  "path": "glbs/000-029/a00bc73a303c46248db6a13a88b23404.glb",
+  "thumb": "https://media.sketchfab.com/models/a00bc73a303c46248db6a13a88b23404/thumbnails/c726edb1fe564ec1806ceeef9714b1cd/200x200.jpeg"
+ },
+ "lungs": {
+  "uid": "a7ac43a140644662a9b896b8a8a10f57",
+  "name": "Respiratory System",
+  "user": "vikrama1998",
+  "by": "Vikrama Raghuraman",
+  "likes": 19,
+  "license": "CC Attribution",
+  "faces": 214784,
+  "path": "glbs/000-005/a7ac43a140644662a9b896b8a8a10f57.glb",
+  "thumb": "https://media.sketchfab.com/models/a7ac43a140644662a9b896b8a8a10f57/thumbnails/097fcd6da0ce43508765ae76beafabe4/64513c960e1d431091261be6666568d5.jpeg"
+ },
+ "diaphragm": {
+  "uid": "b62b76467c6948fbb735c78c0c428d65",
+  "name": "Human Diaphragm",
+  "user": "Devden",
+  "by": "Devden",
+  "likes": 36,
+  "license": "CC Attribution",
+  "faces": 3962,
+  "path": "glbs/000-063/b62b76467c6948fbb735c78c0c428d65.glb",
+  "thumb": "https://media.sketchfab.com/models/b62b76467c6948fbb735c78c0c428d65/thumbnails/051a91507d96426aae15431bc85b640f/ffa1be58810b4119a35e2a4f4109afd8.jpeg"
+ },
+ "food-pipe": {
+  "uid": "0e45d8761e384ca8953c1b6b4294d443",
+  "name": "Human Digestive Organ",
+  "user": "mr_izal",
+  "by": "mr_izal",
+  "likes": 17,
+  "license": "CC Attribution",
+  "faces": 15466,
+  "path": "glbs/000-037/0e45d8761e384ca8953c1b6b4294d443.glb",
+  "thumb": "https://media.sketchfab.com/models/0e45d8761e384ca8953c1b6b4294d443/thumbnails/c27c2dffdc834929bdd184906c462302/99a6d0cc2ef542ba93ae5e60ae1aea85.jpeg"
+ },
+ "stomach": {
+  "uid": "f4ccc8dd0f124d2d9f1d8d4db676e217",
+  "name": "Stomach",
+  "user": "vikrama1998",
+  "by": "Vikrama Raghuraman",
+  "likes": 24,
+  "license": "CC Attribution",
+  "faces": 221184,
+  "path": "glbs/000-091/f4ccc8dd0f124d2d9f1d8d4db676e217.glb",
+  "thumb": "https://media.sketchfab.com/models/f4ccc8dd0f124d2d9f1d8d4db676e217/thumbnails/64d8891509c64d848a92b73ccbeb58f3/5bd41a534f6b45ef89bead79ea8e9be6.jpeg"
+ },
+ "liver": {
+  "uid": "6c4e9bd0d49f4828b804259330c0c6c4",
+  "name": "Human liver and gallbladder",
+  "user": "ElliotSS",
+  "by": "ElliotSS",
+  "likes": 42,
+  "license": "CC Attribution",
+  "faces": 79192,
+  "path": "glbs/000-014/6c4e9bd0d49f4828b804259330c0c6c4.glb",
+  "thumb": "https://media.sketchfab.com/models/6c4e9bd0d49f4828b804259330c0c6c4/thumbnails/6f3b3d43a8244e938881346fec818652/4b0601104a4a436390e9a6b5163017f3.jpeg"
+ },
+ "gallbladder": {
+  "uid": "6c4e9bd0d49f4828b804259330c0c6c4",
+  "name": "Human liver and gallbladder",
+  "user": "ElliotSS",
+  "by": "ElliotSS",
+  "likes": 42,
+  "license": "CC Attribution",
+  "faces": 79192,
+  "path": "glbs/000-014/6c4e9bd0d49f4828b804259330c0c6c4.glb",
+  "thumb": "https://media.sketchfab.com/models/6c4e9bd0d49f4828b804259330c0c6c4/thumbnails/6f3b3d43a8244e938881346fec818652/4b0601104a4a436390e9a6b5163017f3.jpeg"
+ },
+ "pancreas": {
+  "uid": "216b1b22b3284e5fbde85721e029e4ab",
+  "name": "Anatomi Pankreas",
+  "user": "ervae",
+  "by": "Erva Elli Kristanti",
+  "likes": 8,
+  "license": "CC Attribution",
+  "faces": 25756,
+  "path": "glbs/000-127/216b1b22b3284e5fbde85721e029e4ab.glb",
+  "thumb": "https://media.sketchfab.com/models/216b1b22b3284e5fbde85721e029e4ab/thumbnails/98c51278ba274092b3daa76b75cecfce/f37455346f0a4ffbb89d40e0efe5e129.jpeg"
+ },
+ "small-intestine": {
+  "uid": "8a1ca8e3ca224cdeb9264674416bde38",
+  "name": "Small and large intestine",
+  "user": "antonia.sundberg",
+  "by": "antonia.sundberg",
+  "likes": 172,
+  "license": "CC Attribution",
+  "faces": 254208,
+  "path": "glbs/000-137/8a1ca8e3ca224cdeb9264674416bde38.glb",
+  "thumb": "https://media.sketchfab.com/models/8a1ca8e3ca224cdeb9264674416bde38/thumbnails/93d78bba34fd49278f86712f163439e6/432ef6d8f2784e9baaae51d520eba378.jpeg"
+ },
+ "large-intestine": {
+  "uid": "a8fef0b528104d5db20e703f7149cb5b",
+  "name": "Colon",
+  "user": "iqcenter",
+  "by": "iqcenter",
+  "likes": 34,
+  "license": "CC Attribution",
+  "faces": 253876,
+  "path": "glbs/000-082/a8fef0b528104d5db20e703f7149cb5b.glb",
+  "thumb": "https://media.sketchfab.com/models/a8fef0b528104d5db20e703f7149cb5b/thumbnails/8180725d756344c9bccad1439551f5bd/d9ccc84911544a20b4c4fc798f716667.jpeg"
+ },
+ "appendix": {
+  "uid": "94bba75bfd444c30ad6fac9d42887b6b",
+  "name": "Appendix",
+  "user": "jkane326",
+  "by": "jkane326",
+  "likes": 3,
+  "license": "CC Attribution",
+  "faces": 24400,
+  "path": "glbs/000-108/94bba75bfd444c30ad6fac9d42887b6b.glb",
+  "thumb": "https://media.sketchfab.com/models/94bba75bfd444c30ad6fac9d42887b6b/thumbnails/9c955cc5b9b0472ab9952d57908394fa/6f4f5ddf8fc24e4e95b29b800e70fcfe.jpeg"
+ },
+ "kidneys": {
+  "uid": "686992c2a7fb456eaa8997b0366f4062",
+  "name": "Kidney",
+  "user": "cgmac",
+  "by": "cgmac",
+  "likes": 64,
+  "license": "CC Attribution",
+  "faces": 84443,
+  "path": "glbs/000-011/686992c2a7fb456eaa8997b0366f4062.glb",
+  "thumb": "https://media.sketchfab.com/models/686992c2a7fb456eaa8997b0366f4062/thumbnails/70566fb89572462493bb55dc49b87203/db6246aa2a314fd38eaf900fa4aeb549.jpeg"
+ },
+ "bladder": {
+  "uid": "3780929cbff345fc901aa50e4fe58a27",
+  "name": "\u6ccc\u5c3f\u7cfb\u7d71",
+  "user": "10930903MandyHo",
+  "by": "10930903MandyHo",
+  "likes": 7,
+  "license": "CC Attribution",
+  "faces": 264370,
+  "path": "glbs/000-149/3780929cbff345fc901aa50e4fe58a27.glb",
+  "thumb": "https://media.sketchfab.com/models/3780929cbff345fc901aa50e4fe58a27/thumbnails/b9ffed824dcf4f178f8e6417d1c67b21/5ded79228daa440394aa64df5f161e33.jpeg"
+ },
+ "pituitary": {
+  "uid": "042b7c37263f4309bc8b4e18dc989102",
+  "name": "Limbic System - AP Psychology",
+  "user": "shojig",
+  "by": "shojig",
+  "likes": 70,
+  "license": "CC Attribution",
+  "faces": 1644745,
+  "path": "glbs/000-003/042b7c37263f4309bc8b4e18dc989102.glb",
+  "thumb": "https://media.sketchfab.com/models/042b7c37263f4309bc8b4e18dc989102/thumbnails/ef5de2aea536433991654d50f91fb96a/5acf244d09b24ab2b5e3faaca8364040.jpeg"
+ },
+ "thyroid": {
+  "uid": "b7e522c4f5dc4cea97d04a3d6773e96f",
+  "name": "Thyroid",
+  "user": "ShapeShiftingBlob",
+  "by": "ShapeShiftingBlob",
+  "likes": 16,
+  "license": "CC Attribution",
+  "faces": 377492,
+  "path": "glbs/000-088/b7e522c4f5dc4cea97d04a3d6773e96f.glb",
+  "thumb": "https://media.sketchfab.com/models/b7e522c4f5dc4cea97d04a3d6773e96f/thumbnails/a516c2dc92f14772ab8e62fba99fc745/bc3a58eaac004b29b9a9c24dfcb0007b.jpeg"
+ },
+ "adrenal": {
+  "uid": "4258252eb7c04e748ab7501eb5f1abb1",
+  "name": "Urinary System Final",
+  "user": "Hannah.Koffman",
+  "by": "Hannah Koffman",
+  "likes": 8,
+  "license": "CC Attribution",
+  "faces": 1447574,
+  "path": "glbs/000-004/4258252eb7c04e748ab7501eb5f1abb1.glb",
+  "thumb": "https://media.sketchfab.com/models/4258252eb7c04e748ab7501eb5f1abb1/thumbnails/7d2c5bad09c24d918da30814ec841948/7ab0934ce237473d9a077f26d1f53d0e.jpeg"
+ },
+ "bone-marrow": {
+  "uid": "900a320bdc6244bd8f6b761441031ae9",
+  "name": "Long Bone",
+  "user": "iqcenter",
+  "by": "iqcenter",
+  "likes": 10,
+  "license": "CC Attribution",
+  "faces": 253057,
+  "path": "glbs/000-133/900a320bdc6244bd8f6b761441031ae9.glb",
+  "thumb": "https://media.sketchfab.com/models/900a320bdc6244bd8f6b761441031ae9/thumbnails/5f02890a31144c51a02a0c3fee6c1709/feca476005184eeea88fb3a7637c725d.jpeg"
+ },
+ "white-cells": {
+  "uid": "1f785fd1586f493196c38d048f0af0d6",
+  "name": "Basophil",
+  "user": "vikrama1998",
+  "by": "Vikrama Raghuraman",
+  "likes": 19,
+  "license": "CC Attribution",
+  "faces": 505920,
+  "path": "glbs/000-110/1f785fd1586f493196c38d048f0af0d6.glb",
+  "thumb": "https://media.sketchfab.com/models/1f785fd1586f493196c38d048f0af0d6/thumbnails/c4b640f26f77495d9cde7f9887769919/7bff83332af5456e8aa7ebc77068736e.jpeg"
+ },
+ "cells": {
+  "uid": "60ef7d2515b0403986ff9e8b7f234a66",
+  "name": "Human Cell",
+  "user": "markdragan",
+  "by": "markdragan",
+  "likes": 70,
+  "license": "CC Attribution",
+  "faces": 421546,
+  "path": "glbs/000-006/60ef7d2515b0403986ff9e8b7f234a66.glb",
+  "thumb": "https://media.sketchfab.com/models/60ef7d2515b0403986ff9e8b7f234a66/thumbnails/989f3039b114455e814647019e1453e5/0dadb247271349949676d8d8c8aff52f.jpeg"
+ },
+ "dna": {
+  "uid": "e3f82ab0c50a490bbace8d5ccc4698b8",
+  "name": "DNA Ribbon Molecular Model",
+  "user": "sduce",
+  "by": "S.Duce",
+  "likes": 10,
+  "license": "CC Attribution",
+  "faces": 11512,
+  "path": "glbs/000-103/e3f82ab0c50a490bbace8d5ccc4698b8.glb",
+  "thumb": "https://media.sketchfab.com/models/e3f82ab0c50a490bbace8d5ccc4698b8/thumbnails/254a67e0eb1149dc9a4facf05e8c6881/57dd21b3477645738fdb93b25ad85bc6.jpeg"
+ },
+ "womb": {
+  "uid": "102c3045cef84012a7b2e0c07a1eea8e",
+  "name": "Human Uterus",
+  "user": "Stephaniie",
+  "by": "Stephaniie",
+  "likes": 5,
+  "license": "CC Attribution",
+  "faces": 288768,
+  "path": "glbs/000-109/102c3045cef84012a7b2e0c07a1eea8e.glb",
+  "thumb": "https://media.sketchfab.com/models/102c3045cef84012a7b2e0c07a1eea8e/thumbnails/6c80191ad44b4a6e8686c1ed7038cb23/7ddd07f96d504425b0d8dfb8336d343d.jpeg"
+ },
+ "body": {
+  "uid": "665890c542be433fb18ef235cf987cef",
+  "name": "Male Human Skeleton - ZBrush - Anatomy Study",
+  "user": "ruslangadzhiev",
+  "by": "Ruslan Gadzhiev",
+  "likes": 645,
+  "license": "CC Attribution",
+  "faces": 101678,
+  "path": "glbs/000-058/665890c542be433fb18ef235cf987cef.glb",
+  "thumb": "https://media.sketchfab.com/models/665890c542be433fb18ef235cf987cef/thumbnails/6dd1b6bd53bd4599a1dd81cba6710ed1/b75fe308b5a24713810b621679967291.jpeg"
+ }
+}

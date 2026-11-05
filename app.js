@@ -40,6 +40,8 @@ const ICONS = {
   people: '<circle cx="8" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M2.5 20c0-3.5 2.5-6 5.5-6s5.5 2.5 5.5 6M14 14.5c3 0 5.5 2 5.5 5.5"/>',
   mosquito: '<path d="M12 9v10M12 9l-5-5M12 9l5-5M12 13l-6 2M12 13l6 2M12 16l-5 4M12 16l5 4"/><ellipse cx="12" cy="11" rx="1.8" ry="3"/>',
   refresh: '<path d="M20 12a8 8 0 1 1-2.3-5.7M20 4v5h-5"/>',
+  ar: '<path d="M12 3 20 7.5v9L12 21l-8-4.5v-9Z"/><path d="M12 12 20 7.5M12 12v9M12 12 4 7.5"/><path d="M3 4V2h2M21 4V2h-2M3 20v2h2M21 20v2h-2" stroke-width="1.4"/>',
+  close: '<path d="M6 6l12 12M18 6 6 18"/>',
 };
 const icon = (n, cls = '') => `<svg class="k-icon ${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[n] || ''}</svg>`;
 document.querySelectorAll('[data-icon]').forEach(el => el.innerHTML = icon(el.dataset.icon));
@@ -60,6 +62,45 @@ document.addEventListener('click', (e) => {
   if (b) { e.preventDefault(); e.stopPropagation(); haptic(); Voice.play(b.dataset.say, b.dataset.text, b); }
 }, true);
 
+
+
+// ---------- AR: put a part on the floor ----------
+// iPhone app → AR Quick Look (native, model inside the app) · Android app → Google Scene Viewer · web → <model-viewer>
+// (WebXR / Scene Viewer / Quick Look). Android's Scene Viewer fetches the file itself, so it uses the published copy.
+const AR_WEB_BASE = 'https://udambu.vercel.app/ar/';
+const isIOSApp = () => document.documentElement.classList.contains('ios');
+const isAndroidApp = () => document.documentElement.classList.contains('android');
+const arButton = (k, label = 'View in your room') => AR_MODELS[k] ? `<button class="ar-btn" data-ar="${k}">${icon('ar')}<span>${esc(label)}</span></button>` : '';
+let mvLoad = null;
+const loadModelViewer = () => mvLoad ??= new Promise((ok, no) => { const s = document.createElement('script'); s.src = 'vendor/model-viewer.min.js'; s.onload = ok; s.onerror = no; document.head.appendChild(s); });
+function openAR(k) {
+  const p = PART[k] || { name: 'Human skeleton' }, m = AR_MODELS[k]; if (!m) return;
+  haptic();
+  if (isIOSApp() && window.webkit?.messageHandlers?.ar) { window.webkit.messageHandlers.ar.postMessage({ file: `ar/${k}.usdz`, title: p.name }); return; }
+  if (isAndroidApp()) {
+    const file = encodeURIComponent(AR_WEB_BASE + k + '.glb'), title = encodeURIComponent(p.name);
+    location.href = `intent://arvr.google.com/scene-viewer/1.0?file=${file}&mode=ar_preferred&title=${title}&resizable=true#Intent;scheme=https;package=com.google.ar.core;action=android.intent.action.VIEW;S.browser_fallback_url=${encodeURIComponent(AR_WEB_BASE + k + '.glb')};end;`;
+    return;
+  }
+  const sheet = document.createElement('div'); sheet.className = 'arsheet'; sheet.setAttribute('role', 'dialog'); sheet.setAttribute('aria-label', `${p.name} in your room`);
+  sheet.innerHTML = `<header><div><p class="eyebrow">Augmented reality</p><h2 class="heading-2">${esc(p.name)}</h2></div><button class="k-iconbtn" data-close aria-label="Close">${icon('close')}</button></header>
+    <div class="ar-stage"><p class="ar-wait">${icon('cube')} Loading the 3D model…</p></div>
+    <footer><p class="muted">${icon('ar')} On a phone, tap <b>Open camera</b>, point it at the floor and tap to place the ${esc(p.name.toLowerCase())}. Pinch to resize, drag to turn.</p>
+    <p class="credit">“${esc(m.name)}” by ${esc(m.by)} · ${esc(m.license)} · via Sketchfab</p></footer>`;
+  document.body.appendChild(sheet); document.body.classList.add('noscroll');
+  const close = () => { sheet.remove(); document.body.classList.remove('noscroll'); removeEventListener('keydown', esc_); };
+  const esc_ = (e) => e.key === 'Escape' && close(); addEventListener('keydown', esc_);
+  sheet.querySelector('[data-close]').onclick = close;
+  loadModelViewer().then(() => {
+    sheet.querySelector('.ar-stage').innerHTML = `<model-viewer src="ar/${k}.glb" ios-src="ar/${k}.usdz" alt="${esc(p.name)}, 3D model" ar ar-modes="webxr scene-viewer quick-look" ar-placement="floor" ar-scale="auto"
+      camera-controls touch-action="pan-y" auto-rotate rotation-per-second="18deg" shadow-intensity="1" shadow-softness=".8" exposure="1.05" environment-image="neutral">
+      <button slot="ar-button" class="ar-open">${icon('ar')} Open camera</button>
+      <p slot="progress-bar"></p></model-viewer>`;
+    const mv = sheet.querySelector('model-viewer');
+    mv.addEventListener('load', () => { if (!mv.canActivateAR) sheet.querySelector('footer .muted').innerHTML = `${icon('ar')} AR opens on a phone. Here you can turn the model around and zoom in.`; });
+  }).catch(() => { sheet.querySelector('.ar-stage').innerHTML = `<p class="ar-wait">The 3D viewer could not load.</p>`; });
+}
+document.addEventListener('click', (e) => { const b = e.target.closest('[data-ar]'); if (b) { e.preventDefault(); openAR(b.dataset.ar); } });
 
 // ---------- Router ----------
 const routes = [
@@ -118,7 +159,7 @@ function home() {
           ${eyebrow('Human body atlas')}
           <h1 class="display">Explore the<br>human body</h1>
           <p class="lede">${PARTS.length} parts of the human body in real 3D: what each one does, how it works, and what can go wrong.</p>
-          ${speakBtn('ui-home', 'Choose a body system, then open a part to see it in 3D, learn how it works and what can go wrong.', 'Listen')}
+          <div class="hero-actions">${arButton('body', 'Skeleton in your room')}${speakBtn('ui-home', 'Choose a body system, then open a part to see it in 3D, learn how it works and what can go wrong.', 'Listen')}</div>
         </div>
       </div>
       <section class="systems">
@@ -165,6 +206,7 @@ function partPage(key) {
       <div class="hero-text">
         ${eyebrow(s.name)}
         <div class="part-title"><div><h1 class="display">${esc(p.name)}</h1>${p.term ? `<p class="term">${esc(p.term)}</p>` : ''}</div>${speakBtn(key + '-say', p.name + '. ' + p.say, 'Listen')}</div>
+        ${arButton(key)}
         <p class="lede">${esc(p.say)}</p>
         ${p.where ? `<p class="where">${icon('person')}<span>${esc(p.where)}</span></p>` : ''}
         ${p.stats ? `<dl class="stats">${p.stats.map(([l, v]) => `<div><dt>${esc(l)}</dt><dd>${esc(v)}</dd></div>`).join('')}</dl>` : ''}
@@ -300,7 +342,7 @@ function lesson(box, k, right, text, onNext, last, sayId, answer) {
     <p class="verdict">${icon(right ? 'check' : 'sparkle')} ${right ? 'Correct' : `The answer is ${esc(answer || 'the ' + p.name.toLowerCase())}`}</p>
     <div class="lesson-body"><div class="lesson-model" id="lmodel">${img3d(k)}<button class="turn3d" id="turn">${icon('cube')} Turn in 3D</button></div>
       <div><h3 class="heading-2">${esc(p.name)}</h3><p class="body-lg">${esc(text)}</p>
-      <div class="lesson-actions">${speakBtn(sayId, text, 'Listen')}<a class="k-btn k-btn-outline" href="#/part/${k}">Learn more</a>
+      <div class="lesson-actions">${speakBtn(sayId, text, 'Listen')}<a class="k-btn k-btn-outline" href="#/part/${k}">Learn more</a>${arButton(k, 'In your room')}
       <button class="k-btn k-btn-primary k-btn-lg" id="next">${last ? 'See score' : 'Next question'} ${icon('next')}</button></div></div></div></div>`;
   $('#turn').onclick = () => { haptic(); $('#lmodel').innerHTML = img3d(k, 'poster') + sketchfab(k, p.name); mountSketchfab($('#lmodel')); };
   $('#next').onclick = () => { haptic(); onNext(); };
