@@ -1,4 +1,8 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="112" fill="#0077b6"/>
-<circle cx="256" cy="132" r="60" fill="#fff"/>
-<path d="M256 206c-62 0-104 30-118 88l-22 92c-4 18 22 26 30 9l34-74v138c0 22 32 22 34 0l14-104h56l14 104c2 22 34 22 34 0V321l34 74c8 17 34 9 30-9l-22-92c-14-58-56-88-118-88Z" fill="#fff"/>
-<path d="M256 330c-30-20-44-38-44-56 0-14 11-24 24-24 9 0 16 5 20 12 4-7 11-12 20-12 13 0 24 10 24 24 0 18-14 36-44 56Z" fill="#d63384"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+<defs><radialGradient id="g" cx="50%" cy="35%" r="75%"><stop offset="0" stop-color="#17304d"/><stop offset="1" stop-color="#05070b"/></radialGradient>
+<linearGradient id="c" x1="0" x2="1"><stop offset="0" stop-color="#3ec6ff"/><stop offset="1" stop-color="#7a8cff"/></linearGradient>
+<filter id="glow" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="8" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+<rect width="512" height="512" rx="112" fill="url(#g)"/>
+<circle cx="256" cy="256" r="150" fill="none" stroke="#ffffff" stroke-opacity=".14" stroke-width="10"/>
+<path filter="url(#glow)" d="M96 270h92l26-62 40 132 34-160 28 90h100" fill="none" stroke="url(#c)" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

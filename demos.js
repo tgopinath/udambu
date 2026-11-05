@@ -26,8 +26,8 @@ const DEMOS = {
       ${[0, 1, 2, 3, 4, 5, 6, 7].map(b => dot(5, C.red, bodyLoop, 8, b)).join('')}
       <g>${around(160, 102, `<path d="M160 128 C 120 104, 118 74, 142 72 C 152 72, 158 80, 160 86 C 162 80, 168 72, 178 72 C 202 74, 200 104, 160 128Z" fill="${C.red}"/>
         <path d="M150 80 q10 -12 20 0" stroke="#fff" stroke-width="3" fill="none" opacity=".5"/>`, pulse(1, 0.88, 0.8))}</g>
-      ${label(160, 22, 'Lungs')}${label(160, 216, 'Body')}
-      ${label(60, 60, 'tired blood', 'start').replace('class', `fill="${C.blue}" class`)}${label(250, 160, 'fresh blood', 'end').replace('class', `fill="${C.red}" class`)}`;
+      ${label(160, 22, 'Pulmonary circuit')}${label(160, 216, 'Systemic circuit')}
+      ${label(60, 60, 'deoxygenated', 'start').replace('class', `fill="${C.blue}" class`)}${label(250, 160, 'oxygenated', 'end').replace('class', `fill="${C.red}" class`)}`;
   },
   breathe() {
     const lung = (x, flip) => `<path d="M${x} 60 C ${x + flip * 40} 62, ${x + flip * 52} 120, ${x + flip * 46} 160 C ${x + flip * 30} 170, ${x + flip * 8} 166, ${x} 150 Z" fill="${C.pink}" stroke="#c97a74" stroke-width="2"/>`;
@@ -40,9 +40,9 @@ const DEMOS = {
         <animate attributeName="d" values="M90 172 Q160 140 230 172;M90 180 Q160 178 230 180;M90 172 Q160 140 230 172" dur="4s" repeatCount="indefinite"/></path>
       ${[0, 0.7, 1.4].map(b => dot(4, '#7cc7f0', air, 2, b, 'opacity=".9"')).join('')}
       ${label(250, 186, 'diaphragm', 'end')}
-      <text x="160" y="214" text-anchor="middle" class="demo-label"><tspan>breathe in</tspan>
+      <text x="160" y="214" text-anchor="middle" class="demo-label"><tspan>inhale</tspan>
         <animate attributeName="opacity" values="1;1;0;0;1" keyTimes="0;.45;.5;.95;1" dur="4s" repeatCount="indefinite"/></text>
-      <text x="160" y="214" text-anchor="middle" class="demo-label" opacity="0">breathe out
+      <text x="160" y="214" text-anchor="middle" class="demo-label" opacity="0">exhale
         <animate attributeName="opacity" values="0;0;1;1;0" keyTimes="0;.45;.5;.95;1" dur="4s" repeatCount="indefinite"/></text>`;
   },
   digest() {
@@ -65,7 +65,7 @@ const DEMOS = {
         ${Array.from({ length: 6 }, (_, i) => `<rect x="${104 + i * 19}" y="130" width="16" height="22" rx="4" fill="#fff" stroke="#c9c2b2" stroke-width="2"/>`).join('')}</g>
       <circle cx="160" cy="112" r="16" fill="#c77700"><animate attributeName="r" values="16;16;0;0" keyTimes="0;.3;.4;1" dur="8s" repeatCount="indefinite"/></circle>
       ${[[-12, -4], [8, 6], [-2, 10], [14, -8], [-16, 8]].map(([x, y]) => `<circle cx="${160 + x}" cy="${112 + y}" r="5" fill="#c77700" opacity="0"><animate attributeName="opacity" values="0;0;1;1;0" keyTimes="0;.35;.4;.9;1" dur="8s" repeatCount="indefinite"/></circle>`).join('')}
-      ${label(160, 210, 'teeth break food into small pieces')}`;
+      ${label(160, 210, 'mastication: teeth break food down')}`;
   },
   brain() {
     const lobe = (d, fill, step) => `<path d="${d}" fill="${fill}" stroke="#b9708a" stroke-width="2">${inStep(step)}</path>`;
@@ -77,7 +77,7 @@ const DEMOS = {
       ${lobe('M176 140 C 200 140, 214 160, 196 168 C 182 172, 172 160, 176 140Z', '#e88aa6', 3)}
       <path d="M120 90 q 20 -10 40 0 M140 70 q 16 10 30 0 M190 70 q 10 14 26 10 M130 112 q 24 -6 40 4" stroke="#b9708a" stroke-width="2" fill="none"/>
       ${[0, 1, 2, 3].map(i => `<circle r="4" fill="${C.nerve}">${inStep(i)}<animateMotion dur="2s" repeatCount="indefinite" path="M${130 + i * 20} ${80 + (i % 2) * 20} l 30 10 l -10 20 l 30 -6"/></circle>`).join('')}
-      ${label(70, 60, 'think', 'middle')}${label(260, 70, 'feel', 'middle')}${label(260, 186, 'balance', 'middle')}${label(70, 160, 'move', 'middle')}`;
+      ${label(70, 60, 'frontal lobe', 'middle')}${label(260, 70, 'parietal lobe', 'middle')}${label(260, 186, 'cerebellum', 'middle')}${label(70, 160, 'temporal lobe', 'middle')}`;
   },
   nerves() {
     const nerve = 'M80 40 C 90 80, 120 100, 160 110 C 200 120, 230 140, 250 180';
@@ -90,11 +90,11 @@ const DEMOS = {
       <g><animateTransform attributeName="transform" type="translate" values="0 0;0 0;0 0;-18 -14;0 0" keyTimes="0;.74;.8;.95;1" dur="8s" repeatCount="indefinite"/>
         <path d="M244 176 q 6 -14 18 -10 l 14 -2 q 8 0 6 8 l -6 22 q -4 8 -14 8 l -14 -2 z" fill="${C.skin}" stroke="#d9a37e" stroke-width="2"/></g>
       <path d="M282 208 q -6 -10 0 -20 q 6 -10 0 -20" stroke="${C.red}" stroke-width="3" fill="none" opacity=".8"><animate attributeName="opacity" values=".9;.3;.9" dur="1s" repeatCount="indefinite"/></path>
-      ${label(290, 220, 'hot', 'end')}`;
+      ${label(290, 220, 'stimulus', 'end')}`;
   },
   eye() {
     return `
-      <circle cx="40" cy="110" r="18" fill="${C.red}"/>${label(40, 150, 'ball')}
+      <circle cx="40" cy="110" r="18" fill="${C.red}"/>${label(40, 150, 'object')}
       <circle cx="190" cy="110" r="64" fill="#fff" stroke="#c9c2b2" stroke-width="3"/>
       <path d="M128 92 q -12 18 0 36" fill="#6fa8dc" stroke="#3f78ad" stroke-width="3"/>
       <ellipse cx="142" cy="110" rx="8" ry="20" fill="#cfe6f7" stroke="#7aa6c9" stroke-width="2"/>
@@ -106,7 +106,7 @@ const DEMOS = {
       <circle cx="246" cy="110" r="9" fill="${C.red}" opacity="0"><animate attributeName="opacity" values="0;0;1;1;0" keyTimes="0;.45;.5;.95;1" dur="8s" repeatCount="indefinite"/></circle>
       <path d="M254 110 C 280 110, 290 80, 300 60" stroke="${C.nerve}" stroke-width="5" fill="none" stroke-linecap="round"/>
       <circle r="5" fill="#fff4c2" stroke="${C.nerve}" stroke-width="2" opacity="0"><animateMotion dur="2s" begin="6s" repeatCount="indefinite" path="M254 110 C 280 110, 290 80, 300 60"/><animate attributeName="opacity" values="0;0;1;1" keyTimes="0;.74;.75;1" dur="8s" repeatCount="indefinite"/></circle>
-      ${label(142, 160, 'lens')}${label(300, 50, 'to brain', 'end')}`;
+      ${label(142, 160, 'lens')}${label(300, 50, 'optic nerve', 'end')}`;
   },
   ear() {
     return `
@@ -128,7 +128,7 @@ const DEMOS = {
       ${[0, 1, 2, 3, 4, 5].map(b => dot(4, '#e56b8f', drift, 3, b * 0.5, 'opacity=".75"')).join('')}
       <path d="M250 40 C 250 80, 236 96, 240 110 C 244 124, 270 124, 276 112" fill="${C.skin}" stroke="#d9a37e" stroke-width="3"/>
       <path d="M252 60 q 8 -4 16 4" stroke="${C.nerve}" stroke-width="4" fill="none">${inStep(2)}</path>
-      ${label(70, 210, 'flower')}${label(270, 140, 'nose')}`;
+      ${label(70, 210, 'odour source')}${label(270, 140, 'olfactory epithelium')}`;
   },
   taste() {
     return `
@@ -143,13 +143,13 @@ const DEMOS = {
       <rect x="40" y="110" width="240" height="20" fill="#f3c9a8"/><rect x="40" y="130" width="240" height="40" fill="#efb6a0"/><rect x="40" y="170" width="240" height="34" fill="#f6e2a5"/>
       ${[70, 140, 210].map((x, i) => `<path d="M${x} 170 L${x} 112" stroke="#9ac6e6" stroke-width="3"/><circle cx="${x}" r="5" fill="#9ac6e6"><animate attributeName="cy" values="112;112;70" keyTimes="0;.5;1" dur="8s" begin="-${i * 0.3}s" repeatCount="indefinite"/><animate attributeName="opacity" values="0;0;1;0" keyTimes="0;.5;.6;1" dur="8s" begin="-${i * 0.3}s" repeatCount="indefinite"/></circle>`).join('')}
       ${[100, 180, 250].map((x, i) => `<g><animateTransform attributeName="transform" type="translate" values="0 -60;0 0;0 -60;0 -60" keyTimes="0;.2;.4;1" dur="8s" begin="-${i * 0.4}s" repeatCount="indefinite"/>${germ(x, 100, 9)}</g>`).join('')}
-      ${label(30, 124, 'top layer', 'start').replace('x="30"', 'x="44"')}${label(160, 24, 'germs bounce off, sweat cools you')}`;
+      ${label(30, 124, 'epidermis', 'start').replace('x="30"', 'x="44"')}${label(160, 24, 'barrier to pathogens · sweat cools')}`;
   },
   grow() {
     return `
       <rect x="40" y="130" width="240" height="70" fill="#f3c9a8"/>
       ${[90, 160, 230].map((x, i) => `<ellipse cx="${x}" cy="170" rx="10" ry="18" fill="#e7a17f"/><path d="M${x} 170 L${x} 40" stroke="#4a3426" stroke-width="5" stroke-linecap="round" stroke-dasharray="130" stroke-dashoffset="130"><animate attributeName="stroke-dashoffset" values="130;30;30" keyTimes="0;.9;1" dur="8s" begin="-${i * 0.4}s" repeatCount="indefinite"/></path>`).join('')}
-      ${label(160, 216, 'hair grows from tiny pockets in your skin')}`;
+      ${label(160, 216, 'hair grows from follicles in the dermis')}`;
   },
   bones() {
     return `<g><animateTransform attributeName="transform" type="translate" values="0 0;0 -22;0 0" dur="1s" repeatCount="indefinite"/>${stickSkeleton(160, 30)}</g>
@@ -161,13 +161,13 @@ const DEMOS = {
       <path d="M120 140 C 116 96, 204 96, 200 140 C 196 152, 124 152, 120 140Z" fill="#f3a6c0"/>${label(160, 132, 'brain')}
       <circle r="12" fill="#e7c43c" stroke="#b89418" stroke-width="2"><animateMotion dur="2s" repeatCount="indefinite" path="M300 20 L 220 86 L 300 40"/></circle>
       <path d="M212 80 l 10 -6 m -6 16 l 12 0" stroke="#b89418" stroke-width="3"><animate attributeName="opacity" values="0;1;0;0" keyTimes="0;.5;.6;1" dur="2s" repeatCount="indefinite"/></path>
-      ${label(160, 200, 'the skull is a bony helmet')}`;
+      ${label(160, 200, 'the cranium protects the brain')}`;
   },
   spine() {
     let nest = '';
     for (let i = 8; i >= 0; i--) nest = `<g transform="translate(0 ${i ? 18 : 0})"><g><animateTransform attributeName="transform" type="rotate" values="0;${i ? 5 : 0};0;${i ? -5 : 0};0" dur="4s" repeatCount="indefinite"/>
       <rect x="-16" y="0" width="32" height="13" rx="5" fill="${C.bone}" stroke="${C.boneLine}" stroke-width="2"/><rect x="-12" y="13" width="24" height="5" rx="2" fill="#9ac6e6"/>${nest}</g></g>`;
-    return `<g transform="translate(160 24)">${nest}</g>${label(300, 200, 'soft cushions let it bend', 'end')}`;
+    return `<g transform="translate(160 24)">${nest}</g>${label(300, 200, 'intervertebral discs allow movement', 'end')}`;
   },
   flex() {
     return `
@@ -177,7 +177,7 @@ const DEMOS = {
         <rect x="168" y="62" width="100" height="18" rx="9" fill="${C.bone}" stroke="${C.boneLine}" stroke-width="2"/>
         <circle cx="276" cy="71" r="14" fill="${C.skin}" stroke="#d9a37e" stroke-width="2"/></g>
       <circle cx="170" cy="71" r="10" fill="#9ac6e6" stroke="#6d9fc3" stroke-width="2"/>
-      ${label(120, 110, 'muscle squeezes')}${label(176, 110, 'joint', 'start').replace('x="176"', 'x="186"')}`;
+      ${label(120, 110, 'biceps contracts')}${label(176, 110, 'elbow joint', 'start').replace('x="176"', 'x="186"')}`;
   },
   hand() {
     const finger = (x, len, d) => `<g><animateTransform attributeName="transform" type="rotate" values="0 ${x} 120;${d} ${x} 120;0 ${x} 120" dur="3s" repeatCount="indefinite"/>
@@ -187,7 +187,7 @@ const DEMOS = {
       ${finger(124, 24, 30)}${finger(148, 28, 34)}${finger(172, 27, 34)}${finger(196, 22, 30)}
       <g><animateTransform attributeName="transform" type="rotate" values="0 110 160;40 110 160;0 110 160" dur="3s" repeatCount="indefinite"/>
         <rect x="70" y="134" width="40" height="16" rx="7" fill="${C.bone}" stroke="${C.boneLine}" stroke-width="2"/></g>
-      ${label(160, 214, '27 bones in each hand')}`;
+      ${label(160, 214, '27 bones: carpals, metacarpals, phalanges')}`;
   },
   walk() {
     const leg = (dir) => `<g><animateTransform attributeName="transform" type="rotate" values="${20 * dir} 160 90;${-20 * dir} 160 90;${20 * dir} 160 90" dur="1.2s" repeatCount="indefinite"/>
@@ -200,9 +200,9 @@ const DEMOS = {
   factory() {
     return `
       <rect x="60" y="80" width="200" height="60" rx="30" fill="${C.bone}" stroke="${C.boneLine}" stroke-width="3"/>
-      <rect x="84" y="94" width="152" height="32" rx="16" fill="#d9584f"/>${label(160, 72, 'soft marrow inside the bone')}
+      <rect x="84" y="94" width="152" height="32" rx="16" fill="#d9584f"/>${label(160, 72, 'red marrow: haematopoiesis')}
       ${[0, 1, 2, 3, 4, 5].map(i => `<circle r="${i % 3 === 1 ? 7 : 6}" fill="${['#d0312d', '#f4f4f4', '#d0312d', '#e7c43c', '#d0312d', '#f4f4f4'][i]}" stroke="#a33" stroke-width="1"><animateMotion dur="4s" begin="-${i * 0.66}s" repeatCount="indefinite" path="M${110 + i * 20} 110 C ${110 + i * 20} 160, ${80 + i * 30} 180, ${60 + i * 40} 214"/></circle>`).join('')}
-      ${label(48, 200, 'red', 'start')}${label(160, 200, 'white')}${label(272, 200, 'platelets', 'end')}`;
+      ${label(48, 200, 'red cells', 'start')}${label(160, 200, 'white cells')}${label(272, 200, 'platelets', 'end')}`;
   },
   blood() {
     return `
@@ -211,7 +211,7 @@ const DEMOS = {
         <ellipse rx="14" ry="9" fill="${C.red}"/><ellipse rx="6" ry="3" fill="#a3201c"/>
         <circle cx="8" cy="-8" r="4" fill="#7cc7f0"><animate attributeName="opacity" values="1;1;0" keyTimes="0;.6;.7" dur="6s" begin="-${i}s" repeatCount="indefinite"/></circle></g>`).join('')}
       <g><animateMotion dur="8s" repeatCount="indefinite" path="M-20 120 H340"/><circle r="12" fill="#f8f8f8" stroke="#ccc"/><circle r="5" fill="#b9b2d9"/></g>
-      ${label(40, 60, 'oxygen', 'start').replace('class', `fill="#3f8fc4" class`)}${label(160, 180, 'red cells carry air, white cells guard')}`;
+      ${label(40, 60, 'oxygen', 'start').replace('class', `fill="#3f8fc4" class`)}${label(160, 180, 'red cells carry oxygen · white cells defend')}`;
   },
   voice() {
     return `
@@ -220,14 +220,14 @@ const DEMOS = {
       <path stroke="${C.muscle}" stroke-width="6" stroke-linecap="round" fill="none"><animate attributeName="d" values="M194 120 Q 170 116 162 120;M194 120 Q 170 126 162 120;M194 120 Q 170 116 162 120" dur=".12s" repeatCount="indefinite"/></path>
       ${[0, 0.4, 0.8].map(b => dot(4, '#7cc7f0', 'M160 200 L160 30', 1.2, b)).join('')}
       ${[0, 0.5, 1].map(b => `<path d="M220 40 q 14 20 0 40" stroke="${C.blue}" stroke-width="3" fill="none"><animateTransform attributeName="transform" type="translate" values="0 0;60 0" dur="1.5s" begin="-${b}s" repeatCount="indefinite"/><animate attributeName="opacity" values="1;0" dur="1.5s" begin="-${b}s" repeatCount="indefinite"/></path>`).join('')}
-      ${label(160, 104, 'vocal cords')}${label(268, 110, 'sound', 'middle')}`;
+      ${label(160, 104, 'vocal cords')}${label(268, 110, 'sound waves', 'middle')}`;
   },
   liver() {
     return `
       <path d="M70 90 C 80 50, 240 40, 260 80 C 270 110, 200 150, 120 150 C 80 150, 64 120, 70 90Z" fill="#9b3b32" stroke="#7a2c25" stroke-width="3"/>
       ${label(160, 100, 'liver').replace('class', 'fill="#fff" class')}
       ${[0, 1, 2, 3, 4, 5].map(i => `<circle r="6" fill="${i % 2 ? '#5b6275' : C.red}"><animateMotion dur="4s" begin="-${i * 0.66}s" repeatCount="indefinite" path="M0 120 L 160 120 ${i % 2 ? 'L 160 210' : 'L 320 120'}"/></circle>`).join('')}
-      ${label(20, 108, 'in', 'start')}${label(300, 108, 'clean', 'end')}${label(170, 206, 'junk out', 'start')}`;
+      ${label(20, 108, 'in', 'start')}${label(300, 108, 'filtered', 'end')}${label(170, 206, 'toxins removed', 'start')}`;
   },
   squirt() {
     return `
@@ -237,7 +237,7 @@ const DEMOS = {
       ${[0, 0.3, 0.6].map(b => `<circle r="5" fill="#6aa84f" opacity="0"><animateMotion dur="1s" begin="-${4 + b}s" repeatCount="indefinite" path="M140 92 C 170 110, 170 130, 210 150"/><animate attributeName="opacity" values="0;0;1;1;0" keyTimes="0;.5;.5;.75;.76" dur="8s" repeatCount="indefinite"/></circle>`).join('')}
       <circle cx="250" cy="150" r="14" fill="${C.yellow}"><animate attributeName="r" values="14;14;0;0" keyTimes="0;.7;.8;1" dur="8s" repeatCount="indefinite"/></circle>
       ${[[-8, -4], [6, 4], [10, -8], [-4, 8]].map(([x, y]) => `<circle cx="${250 + x}" cy="${150 + y}" r="4" fill="${C.yellow}" opacity="0"><animate attributeName="opacity" values="0;0;1;1" keyTimes="0;.75;.8;1" dur="8s" repeatCount="indefinite"/></circle>`).join('')}
-      ${label(110, 130, 'squeeze')}${label(250, 196, 'fat breaks up')}`;
+      ${label(110, 130, 'contracts')}${label(250, 196, 'bile emulsifies fat')}`;
   },
   kidney() {
     return `
@@ -246,7 +246,7 @@ const DEMOS = {
       ${[0, 1, 2, 3].map(i => `<circle r="6" fill="${C.red}"><animateMotion dur="3s" begin="-${i * 0.75}s" repeatCount="indefinite" path="M320 60 L 136 80 L 100 104 L 136 128 L 320 150"/></circle>`).join('')}
       ${[0, 1, 2, 3].map(i => `<circle r="4" fill="#5b6275"><animateMotion dur="3s" begin="-${i * 0.75}s" repeatCount="indefinite" path="M320 66 L 136 86 L 100 104"/></circle>`).join('')}
       ${[0, 0.7, 1.4].map(b => dot(4, C.yellow, 'M136 104 C 180 110, 200 150, 210 210', 2, b)).join('')}
-      ${label(300, 50, 'blood in', 'end')}${label(300, 172, 'clean blood out', 'end')}${label(220, 214, 'wee', 'start')}`;
+      ${label(300, 50, 'blood in', 'end')}${label(300, 172, 'filtered blood out', 'end')}${label(220, 214, 'urine', 'start')}`;
   },
   bladder() {
     return `
@@ -254,12 +254,12 @@ const DEMOS = {
       ${[0, 0.6].map(b => dot(4, C.yellow, 'M120 20 C 120 60, 140 70, 150 90', 1.2, b) + dot(4, C.yellow, 'M200 20 C 200 60, 180 70, 170 90', 1.2, b)).join('')}
       ${around(160, 130, `<ellipse cx="160" cy="130" rx="50" ry="44" fill="#f2d5d0" stroke="#d29a92" stroke-width="3"/>`, `<animateTransform attributeName="transform" type="scale" values="0.6;1.1;1.1;0.6" keyTimes="0;.6;.8;1" dur="8s" repeatCount="indefinite"/>`)}
       <rect x="120" width="80" fill="#e7c43c" opacity=".7"><animate attributeName="y" values="160;100;100;160" keyTimes="0;.6;.8;1" dur="8s" repeatCount="indefinite"/><animate attributeName="height" values="0;60;60;0" keyTimes="0;.6;.8;1" dur="8s" repeatCount="indefinite"/></rect>
-      <text x="160" y="214" text-anchor="middle" class="demo-label" opacity="0">full: time for the toilet<animate attributeName="opacity" values="0;0;1;1;0" keyTimes="0;.55;.6;.8;.85" dur="8s" repeatCount="indefinite"/></text>`;
+      <text x="160" y="214" text-anchor="middle" class="demo-label" opacity="0">stretch receptors signal: full<animate attributeName="opacity" values="0;0;1;1;0" keyTimes="0;.55;.6;.8;.85" dur="8s" repeatCount="indefinite"/></text>`;
   },
   messenger() {
     const path = 'M90 50 C 140 60, 150 120, 220 140';
     return `
-      <circle cx="80" cy="46" r="30" fill="#f3a6c0"/><circle cx="90" cy="58" r="7" fill="#b5367a">${inStep(0)}</circle>${label(80, 98, 'gland')}
+      <circle cx="80" cy="46" r="30" fill="#f3a6c0"/><circle cx="90" cy="58" r="7" fill="#b5367a">${inStep(0)}</circle>${label(80, 98, 'pituitary')}
       <path d="${path}" stroke="${C.red}" stroke-width="10" opacity=".25" fill="none" stroke-linecap="round"/>
       ${[0, 0.5, 1, 1.5].map(b => dot(5, '#b5367a', path, 2, b)).join('')}
             ${around(250, 210, stickSkeleton(250, 90, 0.55), `<animateTransform attributeName="transform" type="scale" values="1 0.8;1 0.8;1 1.05;1 0.8" keyTimes="0;.55;.9;1" dur="8s" repeatCount="indefinite"/>`)}`;
@@ -270,12 +270,12 @@ const DEMOS = {
       <g><animateMotion dur="8s" repeatCount="indefinite" path="M160 110 L 90 70 L 230 60 L 250 160 L 80 170 L 160 110" keyPoints="0;.2;.4;.6;.8;1" keyTimes="0;.25;.45;.65;.85;1" calcMode="linear"/>
         <circle r="22" fill="#f4f6fb" stroke="#b8c2dc" stroke-width="3"><animate attributeName="r" values="22;26;22" dur=".8s" repeatCount="indefinite"/></circle>
         <circle r="9" fill="#9d8fd6" cx="-4" cy="-3"/><circle r="6" fill="#9d8fd6" cx="7" cy="4"/></g>
-      ${label(160, 214, 'white cells gobble germs')}`;
+      ${label(160, 214, 'phagocytes engulf pathogens')}`;
   },
   filter() {
     return `
       <path d="M0 110 C 60 110, 90 80, 130 80 L 190 80 C 230 80, 260 110, 320 110" stroke="#cfe3c4" stroke-width="16" fill="none"/>
-      <ellipse cx="160" cy="80" rx="46" ry="30" fill="#8fbf7a" stroke="#5f8f4c" stroke-width="3"/>${label(160, 130, 'germ trap')}
+      <ellipse cx="160" cy="80" rx="46" ry="30" fill="#8fbf7a" stroke="#5f8f4c" stroke-width="3"/>${label(160, 130, 'lymph node')}
       ${[0, 1, 2].map(i => `<g><animateMotion dur="4s" begin="-${i * 1.3}s" repeatCount="indefinite" path="M0 110 C 60 110, 90 80, 150 80"/>${germ(0, 0, 7)}<animate attributeName="opacity" values="1;1;0" keyTimes="0;.9;1" dur="4s" begin="-${i * 1.3}s" repeatCount="indefinite"/></g>`).join('')}
       ${[0, 1, 2].map(i => dot(5, '#e9f3e3', 'M170 80 C 230 80, 260 110, 320 110', 3, i, 'stroke="#8fbf7a" stroke-width="2"')).join('')}`;
   },
@@ -288,7 +288,7 @@ const DEMOS = {
       ${[-1, 1].map(s => `<circle cy="110" r="10" fill="#b5367a" opacity="0"><animate attributeName="cx" values="160;160;${160 + s * 30};${160 + s * 30};${160 + s * 70}" keyTimes="0;.3;.45;.6;1" dur="8s" repeatCount="indefinite"/><animate attributeName="opacity" values="0;0;1;1" keyTimes="0;.28;.3;1" dur="8s" repeatCount="indefinite"/></circle>
         <circle cy="110" r="46" fill="#f6d1e0" stroke="#d688aa" stroke-width="3" opacity="0"><animate attributeName="cx" values="${160 + s * 34};${160 + s * 70}" dur="8s" keyTimes="0;1" repeatCount="indefinite"/><animate attributeName="opacity" values="0;0;1;1" keyTimes="0;.6;.61;1" dur="8s" repeatCount="indefinite"/></circle>`).join('')}
       ${[-1, 1].map(s => `<circle cy="110" r="10" fill="#b5367a" opacity="0"><animate attributeName="cx" values="${160 + s * 34};${160 + s * 70}" dur="8s" repeatCount="indefinite"/><animate attributeName="opacity" values="0;0;1;1" keyTimes="0;.6;.61;1" dur="8s" repeatCount="indefinite"/></circle>`).join('')}
-      ${label(160, 206, 'one cell becomes two')}`;
+      ${label(160, 206, 'mitosis: one cell becomes two')}`;
   },
   dna() {
     const N = 16, rungs = [], colors = ['#e56b8f', '#3b6fd8', '#e7c43c', '#3aa66b'];
@@ -300,7 +300,7 @@ const DEMOS = {
         <circle cx="${x}" r="6" fill="#5b6275"><animate attributeName="cy" values="${[0, 1, 2, 3, 4].map(k => (110 - 50 * Math.sin((i / N) * 2 * Math.PI * 2 + k * Math.PI / 2)).toFixed(1)).join(';')}" dur="4s" repeatCount="indefinite"/></circle>
         <circle cx="${x}" r="6" fill="#0e8c8c"><animate attributeName="cy" values="${[0, 1, 2, 3, 4].map(k => (110 + 50 * Math.sin((i / N) * 2 * Math.PI * 2 + k * Math.PI / 2)).toFixed(1)).join(';')}" dur="4s" repeatCount="indefinite"/></circle>`);
     }
-    return rungs.join('') + label(160, 210, 'a twisty ladder of instructions');
+    return rungs.join('') + label(160, 210, 'double helix of base pairs');
   },
   baby() {
     return `

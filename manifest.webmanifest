@@ -1,3 +1,3 @@
-{ "name": "Udambu", "short_name": "Udambu", "description": "Explore the human body in real 3D — made for kids.",
+{ "name": "Udambu", "short_name": "Udambu", "description": "A human body atlas in real 3D.",
   "start_url": "./", "display": "standalone", "background_color": "#f4f5f8", "theme_color": "#0077b6",
   "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }] }

@@ -11,22 +11,22 @@ const DESK = path.join(ROOT, 'shots-desktop');
 const CHROME = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
-// Shoots the live site, so the card always shows what is published.
-const ORIGIN = 'https://udambu.vercel.app', SERVER = null;
+// Shoots the live site, so the card always shows what is published. LOCAL=1 shoots this folder instead (before publishing).
+const ORIGIN = process.env.LOCAL ? null : 'https://udambu.vercel.app', SERVER = ['python3', '-m', 'http.server', '$PORT', '--bind', '127.0.0.1'];
 const ON_LOAD = null, SEED = '';
 const SHOTS_LIST = [
-  { file: 'body', hash: '#/' },
-  { file: 'heart', hash: '#/part/heart', wait: 8000 },
+  { file: 'body', hash: '#/', wait: 15000 },
+  { file: 'heart', hash: '#/part/heart', wait: 15000 },
   { file: 'illness', hash: '#/ill/common-cold' },
-  { file: 'play', hash: '#/play' },
-  { file: 'web', hash: '#/', desktop: true },
+  { file: 'play', hash: '#/play/quiz', wait: 4000, js: `document.querySelector('.opt').click(); await new Promise(r => setTimeout(r, 1200)); window.scrollTo(0, 0);` },
+  { file: 'web', hash: '#/', desktop: true, wait: 15000 },
 ];
 
 fs.mkdirSync(SHOTS, { recursive: true }); fs.mkdirSync(DESK, { recursive: true });
 const tmp = fs.mkdtempSync(path.join(ROOT, '.shots-'));
 const port = 5700 + Math.floor(Math.random() * 200), dbg = port + 1000;
 const server = ORIGIN ? null : spawn(SERVER[0], SERVER.slice(1).map(a => a.replace('$PORT', port)), { cwd: ROOT, stdio: 'ignore', env: { ...process.env, PORT: String(port) } });
-const chrome = spawn(CHROME, ['--headless=new', '--disable-gpu', '--hide-scrollbars', '--mute-audio', `--remote-debugging-port=${dbg}`, `--user-data-dir=${tmp}/profile`, 'about:blank'], { stdio: 'ignore' });
+const chrome = spawn(CHROME, ['--headless=new', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--hide-scrollbars', '--mute-audio', `--remote-debugging-port=${dbg}`, `--user-data-dir=${tmp}/profile`, 'about:blank'], { stdio: 'ignore' });
 try {
   let ws;
   for (let i = 0; i < 60 && !ws; i++) {

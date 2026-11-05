@@ -20,14 +20,13 @@ QUIZ.forEach((q, i) => {
   if (q.q) add(`quiz-${i}`, q.q); else add(`quiz-${i}`, 'What is this body part?');
   if (q.opts) { add(`quiz-ok-${i}`, 'Correct! ' + q.learn); add(`quiz-ans-${i}`, `The answer is: ${q.opts[q.a]}. ` + q.learn); }
 });
-for (let n = 0; n <= 10; n++) { const m = n >= 8 ? 'Excellent. You know your body well.' : n >= 5 ? 'Well done. You learned a lot.' : 'Good try. Play again to learn more.'; add(`ui-score-${n}`, `You got ${n} out of 10. ${m}`); }
+for (let n = 0; n <= 10; n++) { const m = n >= 8 ? 'Excellent. You know the body well.' : n >= 5 ? 'Good result. Review the explanations to learn more.' : 'Keep going. Each answer explains the facts.'; add(`ui-score-${n}`, `You got ${n} out of 10. ${m}`); }
 for (const s of SYSTEMS) add(`sys-${s.key}`, `${s.name}. ${s.say}`);
 Object.assign(lines, {
-  'ui-home': 'Pick a body system, then tap a part to see it in 3D and learn what it does.',
-  'ui-parts': 'Here are all the parts of your body. Tap a picture to explore it.',
-  'ui-sick': 'Sometimes our body gets sick or hurt. Tap one to learn about it, and how to stay healthy.',
-  'ui-grownup': 'Feeling sick? Tell a grown-up. Only a doctor can say what is wrong.',
-  'ui-play': 'Pick a game. In the body quiz, answer questions and learn about every part. In what does this, watch and pick the part.',
+  'ui-home': 'Choose a body system, then open a part to see it in 3D, learn how it works and what can go wrong.',
+  'ui-parts': 'All the parts of the human body, grouped by system. Open any part to explore it in 3D.',
+  'ui-sick': 'Common conditions, with their causes, symptoms, treatment, prevention and when to see a doctor.',
+  'ui-play': 'Pick a quiz. The body quiz has ten questions with a short explanation after each answer. In what does this, watch an animation and name the part.',
   'ui-3d': 'Drag with your finger to turn it around.', 'which-q': 'Which part does this?',
 });
 const man = fs.existsSync('.work/voice.json') ? JSON.parse(fs.readFileSync('.work/voice.json', 'utf8')) : {};
@@ -37,7 +36,7 @@ const tmp = fs.mkdtempSync(os.tmpdir() + '/udv-');
 let n = 0;
 for (const [id, t] of todo) {
   const aiff = `${tmp}/${id}.aiff`;
-  execFileSync('say', ['-v', 'Samantha', '-r', '165', '-o', aiff, t.replace(/[“”]/g, '"')]);
+  execFileSync('say', ['-v', 'Samantha', '-r', '178', '-o', aiff, t.replace(/[“”]/g, '"')]);
   execFileSync('afconvert', ['-f', 'm4af', '-d', 'aac', '-b', '40000', '-c', '1', aiff, `audio/${id}.m4a`]);
   fs.unlinkSync(aiff); man[id] = t; if (++n % 100 === 0) console.log(n);
 }
