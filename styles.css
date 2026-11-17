@@ -453,3 +453,66 @@ html.k-ios .block { background: transparent; border-top-color: var(--ios-sep); }
 html.k-ios .systile { border-radius: 22px; }
 html.k-ios .systile[aria-selected="true"], html.k-ios .game.lead { border-color: var(--ios-tint); box-shadow: inset 0 0 0 1px var(--ios-tint); }
 html.k-ios .k-btn-primary { box-shadow: none; }
+
+/* ================= Declutter pass: grids of four, tabs, step player, surprising facts ================= */
+.pgrid, .pgrid.small, .sysrail { display: grid; grid-auto-flow: row; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; overflow: visible; margin: 0; padding: 0; scroll-snap-type: none; }
+.sysrail .systile { aspect-ratio: 4 / 3; }
+@media (max-width: 720px) { .pgrid, .pgrid.small, .sysrail { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; } }
+.home { gap: 56px; }
+.row-head { margin-bottom: 18px; }
+
+/* part page */
+.part { gap: 28px; }
+.part-hero .hero-text { gap: 10px; }
+.part-hero .term { margin-top: -4px; }
+.wow { display: grid; gap: 8px; width: 100%; padding: 20px 22px; border-radius: 20px; cursor: pointer; text-align: left; color: var(--ink);
+  border: 1px solid color-mix(in srgb, var(--sys, var(--primary)) 45%, transparent);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--sys, var(--primary)) 22%, transparent), rgba(255,255,255,.02)); }
+.wow-k { display: inline-flex; align-items: center; gap: 8px; font: 700 12px/16px var(--font-sans); letter-spacing: .12em; text-transform: uppercase; color: var(--primary-text); }
+.wow-k .k-icon { width: 18px; height: 18px; }
+.wow-t { font: 700 22px/30px var(--font-display); letter-spacing: -.01em; }
+@media (min-width: 860px) { .wow-t { font-size: 26px; line-height: 34px; } }
+.tabs { position: sticky; top: calc(56px + env(safe-area-inset-top, 0px)); z-index: 5; display: flex; gap: 4px; padding: 4px; border-radius: 999px;
+  background: rgba(10,13,19,.85); border: 1px solid var(--line); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); overflow-x: auto; scrollbar-width: none; }
+.tabs::-webkit-scrollbar { display: none; }
+.tabs button { flex: 1 0 auto; min-height: 44px; padding: 0 16px; border: 0; border-radius: 999px; background: transparent; color: var(--ink-2); font: 700 15px/20px var(--font-sans); cursor: pointer; white-space: nowrap; }
+.tabs button[aria-selected="true"] { background: var(--primary-soft); color: #fff; box-shadow: inset 0 0 0 1px rgba(62,198,255,.45); }
+.tabpanel { display: grid; gap: 18px; min-height: 240px; animation: rise .2s ease-out; }
+.tabpanel > .eyebrow { margin-top: 8px; }
+.ov { display: grid; gap: 24px; }
+.ov .prose { margin-bottom: 14px; }
+.ov-side { display: grid; gap: 12px; align-content: start; }
+.ov-where { padding: 14px 16px; border-radius: 14px; background: var(--surface); border: 1px solid var(--line); }
+.ov-where p:last-child { margin-top: 4px; color: var(--ink-2); }
+@media (min-width: 860px) { .ov { grid-template-columns: 1.6fr 1fr; } }
+.player { display: grid; gap: 18px; }
+.player .demo-stage { padding: 12px; }
+.player-side { display: grid; gap: 14px; align-content: center; }
+.step-now { font: 700 22px/32px var(--font-display); min-height: 96px; }
+.step-dots { display: flex; gap: 8px; }
+.step-dots button { width: 36px; height: 6px; border: 0; border-radius: 3px; background: rgba(255,255,255,.15); cursor: pointer; padding: 0; }
+.step-dots button.on { background: var(--sys, var(--primary)); box-shadow: 0 0 10px var(--sys, var(--primary)); }
+.player-ctl { display: flex; gap: 8px; align-items: center; }
+.player-ctl .k-iconbtn { width: 48px; height: 48px; border: 1px solid var(--line-strong); color: #fff; }
+.player-ctl .play { background: var(--primary); color: var(--on-primary); border-color: transparent; }
+@media (min-width: 860px) { .player { grid-template-columns: 1.3fr 1fr; align-items: center; } }
+.factlist { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (max-width: 720px) { .factlist { grid-template-columns: 1fr; } }
+.factlist button { display: grid; gap: 10px; width: 100%; height: 100%; padding: 18px; text-align: left; border-radius: 16px; cursor: pointer;
+  border: 1px solid var(--line); background: var(--surface); color: var(--ink); font: 400 17px/26px var(--font-sans); }
+.factlist li:first-child button { border-color: color-mix(in srgb, var(--sys, var(--primary)) 50%, transparent); background: color-mix(in srgb, var(--sys, var(--primary)) 14%, transparent); font-weight: 700; }
+.fn { font: 700 13px/16px var(--font-mono); color: var(--sys, var(--primary-text)); }
+.part .prevnext { padding-top: 20px; }
+
+/* home: surprising facts */
+.wowgrid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+@media (max-width: 720px) { .wowgrid { grid-template-columns: 1fr; } }
+.wowcard { display: grid; grid-template-rows: auto 1fr; border-radius: 18px; overflow: hidden; text-decoration: none; background: var(--surface); border: 1px solid var(--line); transition: box-shadow .2s; }
+.wowcard:hover { box-shadow: var(--glow); border-color: transparent; }
+.wowcard-art { display: block; aspect-ratio: 16 / 9; background: #0b0e14; overflow: hidden; }
+.wowcard-art img { width: 100%; height: 100%; object-fit: cover; }
+.wowcard-body { display: grid; gap: 6px; padding: 14px 16px 18px; }
+.wowcard-body small { font: 700 11px/14px var(--font-sans); letter-spacing: .1em; text-transform: uppercase; color: var(--sys); filter: brightness(1.5); }
+.wowcard-body span { font: 700 17px/24px var(--font-sans); color: #fff; }
+@media (max-width: 720px) { .wowcard { grid-template-columns: 112px 1fr; grid-template-rows: none; } .wowcard-art { aspect-ratio: auto; height: 100%; } }
+@media (max-width: 480px) { .tabs { gap: 2px; } .tabs button { flex: 1 1 0; padding: 0 6px; font-size: 14px; } }

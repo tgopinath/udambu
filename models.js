@@ -301,5 +301,89 @@ const MODELS = {
   "name": "Animated Human Body with circulatory system",
   "by": "AVRcontent",
   "license": "Standard"
+ },
+ "pelvis": {
+  "uid": "ee6e3f446510432db5a4b2085ef5dd48",
+  "name": "Pelvis - 3D Scan",
+  "by": "Halo Renders",
+  "license": "Standard"
+ },
+ "shoulder": {
+  "uid": "a40e73a99c5c4b5a95268c4a2ab64033",
+  "name": "Scapula Bone 3d Model",
+  "by": "Anatomy by Doctor Jana",
+  "license": "Standard"
+ },
+ "kneecap": {
+  "uid": "f0e558f9a8734e459bee82a319876621",
+  "name": "Patela/ Patella",
+  "by": "Anatomía Humana 3D",
+  "license": "Standard"
+ },
+ "tendons": {
+  "uid": "f97847160e4a47409309050f0e269626",
+  "name": "Foot muscles",
+  "by": "Ebers",
+  "license": "Standard"
+ },
+ "ligaments": {
+  "uid": "efd5b74b3c7046bf93d6dcafcd88c0a7",
+  "name": "Knee anatomy: capsula and ligaments",
+  "by": "University of Dundee, CAHID",
+  "license": null
+ },
+ "cartilage": {
+  "uid": "1e947b39c2e545128dad5d66b391b4d8",
+  "name": "Knee anatomy: bones and cartilage",
+  "by": "University of Dundee, CAHID",
+  "license": null
+ },
+ "parathyroid": {
+  "uid": "4400ccceaf62468aa6be1f2e99a6586a",
+  "name": "Healthy Thyroid and Thyroid Cancer",
+  "by": "Nima",
+  "license": "Standard"
+ },
+ "hypothalamus": {
+  "uid": "8aaafdeae0984c35800007e8a6fd570e",
+  "name": "Thalamus, hypothalamus, hippocampus and fornix",
+  "by": "Ebers",
+  "license": "Editorial"
+ },
+ "pineal": {
+  "uid": "2350871102d940dfa5f72e9e8fe02880",
+  "name": "Esquema del Diencéfalo/Diagram of Diencephalon",
+  "by": "Anatomía Humana 3D",
+  "license": "Editorial"
+ },
+ "sinuses": {
+  "uid": "7910c473f85f4562b590297bff050976",
+  "name": "Paranasal Sinuses",
+  "by": "Anatomary",
+  "license": "CC Attribution-NonCommercial"
+ },
+ "ureters": {
+  "uid": "2a185530531344c59758afa390eeea37",
+  "name": "Urinary system",
+  "by": "Ebers",
+  "license": "Standard"
+ },
+ "body-fat": {
+  "uid": "b3a47647d3004a9d86f5181168b0fe72",
+  "name": "Fat Cells",
+  "by": "ZMS1992",
+  "license": "Standard"
+ },
+ "platelets": {
+  "uid": "08fed7ab59514804b07804e40a57ef33",
+  "name": "blood platelet / thrombocyte",
+  "by": "i.isabelgordon",
+  "license": "CC Attribution"
+ },
+ "thymus": {
+  "uid": "14800d739ecb46678d7584a401b0aa77",
+  "name": "Lymphatic system",
+  "by": "University of Dundee, CAHID",
+  "license": null
  }
 };

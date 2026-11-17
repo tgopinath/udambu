@@ -102,6 +102,8 @@ function openAR(k) {
     mv.addEventListener('load', () => { if (!mv.canActivateAR) sheet.querySelector('footer .muted').innerHTML = `${icon('ar')} AR opens on a phone. Here you can turn the model around and zoom in.`; });
   }).catch(() => { sheet.querySelector('.ar-stage').innerHTML = `<p class="ar-wait">The 3D viewer could not load.</p>`; });
 }
+// opening a part from anywhere starts on its Overview tab (the Surprising facts cards open Facts)
+document.addEventListener('click', (e) => { const a = e.target.closest('a[href^="#/part/"]'); if (a && !a.hasAttribute('data-facts')) sessionStorage.setItem('be.tab', 'overview'); }, true);
 document.addEventListener('click', (e) => { const b = e.target.closest('[data-ar]'); if (b) { e.preventDefault(); openAR(b.dataset.ar); } });
 
 // ---------- Android app mode (Material Design 3, from the shared Kolam M3 kit) ----------
@@ -212,6 +214,11 @@ function home() {
           <div class="hero-actions">${arButton('body', 'Skeleton in your room')}${speakBtn('ui-home', 'Choose a body system, then open a part to see it in 3D, learn how it works and what can go wrong.', 'Listen')}</div>
         </div>
       </div>
+      <section class="wowsec">
+        <div class="row-head"><div><h2 class="heading-2">Surprising facts</h2><p class="muted">Things your body does that you might not believe.</p></div>
+          <button class="k-btn k-btn-outline" id="moreFacts">${icon('refresh')} More facts</button></div>
+        <div class="wowgrid" id="wowgrid"></div>
+      </section>
       <section class="systems">
         <div class="row-head"><h2 class="heading-2">Body systems</h2><a class="link" href="#/parts">All parts ${icon('next')}</a></div>
         <div class="sysrail" role="tablist">${SYSTEMS.map(s => { const first = PARTS.find(p => p.sys === s.key);
@@ -228,6 +235,14 @@ function home() {
   };
   paint();
   app.querySelector('.sysrail').onclick = (e) => { const b = e.target.closest('[data-sys]'); if (!b) return; haptic(); sys = b.dataset.sys; store.set('homeSys', sys); paint(true); };
+  // four surprising facts at a time; tapping one opens that part on its Facts tab
+  const facts = shuffle(PARTS.filter(p => p.wow)); let at = 0;
+  const paintFacts = () => { const four = Array.from({ length: 4 }, (_, n) => facts[(at + n) % facts.length]); at = (at + 4) % facts.length;
+    $('#wowgrid').innerHTML = four.map(p => `<a class="wowcard" href="#/part/${p.key}" data-facts style="--sys:${SYS[p.sys].color}"><span class="wowcard-art">${img3d(p.key)}</span>
+      <span class="wowcard-body"><small>${esc(p.name)}</small><span>${esc(p.wow)}</span></span></a>`).join(''); };
+  paintFacts();
+  $('#moreFacts').onclick = () => { haptic(); paintFacts(); };
+  $('#wowgrid').onclick = (e) => { if (e.target.closest('[data-facts]')) sessionStorage.setItem('be.tab', 'facts'); };
 }
 
 // ---------- All parts, by body system ----------
@@ -247,65 +262,78 @@ function partsPage() {
 function partPage(key) {
   const p = PART[key]; if (!p) return (location.hash = '#/parts');
   setTitle(p.name);
-  const s = SYS[p.sys], m = MODELS[key];
+  const s = SYS[p.sys];
   const team = PARTS.filter(x => x.sys === p.sys), i = team.indexOf(p);
   const prev = team[(i - 1 + team.length) % team.length], next = team[(i + 1) % team.length];
+  const TABS = [['overview', 'Overview'], ['how', 'How it works'], ['facts', 'Facts'], ['health', 'Health']];
+  let tab = sessionStorage.getItem('be.tab') || 'overview';
   app.innerHTML = `<article class="part" style="--sys:${s.color}">
     <header class="part-hero">
       <div class="hero-model">${img3d(key, 'poster')}${sketchfab(key, p.name)}<p class="stage-hint">${icon('cube')} Drag to turn · pinch to zoom</p></div>
       <div class="hero-text">
         ${eyebrow(s.name)}
-        <div class="part-title"><div><h1 class="display">${esc(p.name)}</h1>${p.term ? `<p class="term">${esc(p.term)}</p>` : ''}</div>${speakBtn(key + '-say', p.name + '. ' + p.say, 'Listen')}</div>
-        ${arButton(key)}
+        <h1 class="display">${esc(p.name)}</h1>${p.term ? `<p class="term">${esc(p.term)}</p>` : ''}
         <p class="lede">${esc(p.say)}</p>
-        ${p.where ? `<p class="where">${icon('person')}<span>${esc(p.where)}</span></p>` : ''}
-        ${p.stats ? `<dl class="stats">${p.stats.map(([l, v]) => `<div><dt>${esc(l)}</dt><dd>${esc(v)}</dd></div>`).join('')}</dl>` : ''}
-        ${credit(key)}
-        <nav class="jump">${[['how', 'How it works'], ['more', 'What it does'], ['facts', 'Facts'], ['care', 'Care']].map(([id, t]) => `<a href="#${id}" data-jump="${id}">${t}</a>`).join('')}</nav>
+        <div class="hero-actions">${arButton(key)}${speakBtn(key + '-say', p.name + '. ' + p.say, 'Listen', !!AR_MODELS[key])}</div>
       </div>
     </header>
-
-    <section class="block" id="how">
-      <div class="block-head"><span class="num">01</span><h2 class="heading-2">How it works</h2><button class="k-iconbtn playpause" id="pp" aria-label="Pause">${icon('pause')}</button></div>
-      <div class="demo-grid"><div class="demo-stage" id="stage">${demoSVG(p.demo)}</div>
-      <ol class="steps" id="steps">${p.how.map((t, n) => `<li><button data-say="${key}-how-${n}" data-text="${esc(t)}"><span class="n">${n + 1}</span><span>${esc(t)}</span></button></li>`).join('')}</ol></div>
-    </section>
-
-    <section class="block" id="more">
-      <div class="block-head"><span class="num">02</span><h2 class="heading-2">What it does</h2>${speakBtn(key + '-more', p.more, 'Listen')}</div>
-      <p class="body-lg prose">${esc(p.more)}</p>
-    </section>
-
-    <section class="block" id="facts">
-      <div class="block-head"><span class="num">03</span><h2 class="heading-2">Facts</h2></div>
-      <ul class="rows">${p.facts.map((f, n) => `<li><button data-say="${key}-fact-${n}" data-text="${esc(f)}">${icon('bulb')}<span>${esc(f)}</span>${icon('speaker', 'row-say')}</button></li>`).join('')}</ul>
-    </section>
-
-    <section class="block" id="care">
-      <div class="block-head"><span class="num">04</span><h2 class="heading-2">Keeping it healthy</h2></div>
-      <ul class="rows care">${p.care.map((c, n) => `<li><button data-say="${key}-care-${n}" data-text="${esc(c)}">${icon('check')}<span>${esc(c)}</span>${icon('speaker', 'row-say')}</button></li>`).join('')}</ul>
-    </section>
-
-    ${p.ill.length ? `<section class="block">
-      <div class="block-head"><span class="num">05</span><h2 class="heading-2">Illnesses</h2></div>
-      <div class="ill-chips">${p.ill.map(k => ILL[k] && `<a class="ill-chip" href="#/ill/${k}">${icon(kindIcon(ILL[k]))}${esc(ILL[k].name)}${icon('next')}</a>`).join('')}</div>
-    </section>` : ''}
-
+    ${p.wow ? `<button class="wow" data-say="${key}-wow" data-text="${esc(p.wow)}"><span class="wow-k">${icon('sparkle')} Did you know?</span><span class="wow-t">${esc(p.wow)}</span></button>` : ''}
+    <nav class="tabs" role="tablist">${TABS.map(([k, t]) => `<button role="tab" data-tab="${k}" aria-selected="${k === tab}">${t}</button>`).join('')}</nav>
+    <section class="tabpanel" id="panel"></section>
     <nav class="prevnext">
       <a href="#/part/${prev.key}">${icon('back')}<span><small>Previous</small>${esc(prev.name)}</span></a>
       <a href="#/part/${next.key}"><span><small>Next</small>${esc(next.name)}</span>${icon('next')}</a>
     </nav>
   </article>`;
 
-  app.querySelector('.jump').onclick = (e) => { const a = e.target.closest('[data-jump]'); if (!a) return; e.preventDefault(); document.getElementById(a.dataset.jump).scrollIntoView({ behavior: 'smooth' }); };
-  // step captions follow the 8-second animation
-  const svg = $('#stage svg'), steps = [...document.querySelectorAll('#steps li')];
-  let paused = false, raf;
-  const tick = () => { const n = Math.floor((svg.getCurrentTime() % DEMO_CYCLE) / (DEMO_CYCLE / 4)); steps.forEach((li, k) => li.classList.toggle('on', k === n)); raf = requestAnimationFrame(tick); };
-  tick(); onLeave(() => cancelAnimationFrame(raf));
-  $('#pp').onclick = () => { paused = !paused; haptic(); paused ? svg.pauseAnimations() : svg.unpauseAnimations();
-    $('#pp').innerHTML = icon(paused ? 'play' : 'pause'); $('#pp').setAttribute('aria-label', paused ? 'Play' : 'Pause'); };
-  setTimeout(() => say(key + '-say', p.name + '. ' + p.say, $('.part-title .speak')), 300);
+  const panel = $('#panel');
+  let stop = () => {};
+  const show = (t) => {
+    stop(); stop = () => {}; tab = t; sessionStorage.setItem('be.tab', t);
+    app.querySelectorAll('.tabs button').forEach(b => b.setAttribute('aria-selected', String(b.dataset.tab === t)));
+    if (t === 'overview') panel.innerHTML = `
+      <div class="ov">
+        <div><p class="body-lg prose">${esc(p.more)}</p>${speakBtn(key + '-more', p.more, 'Read it to me')}</div>
+        <aside class="ov-side">
+          ${p.where ? `<div class="ov-where"><p class="eyebrow">Where it is</p><p>${esc(p.where)}</p></div>` : ''}
+          ${p.stats ? `<dl class="stats">${p.stats.map(([l, v]) => `<div><dt>${esc(l)}</dt><dd>${esc(v)}</dd></div>`).join('')}</dl>` : ''}
+        </aside>
+      </div>${credit(key)}`;
+    if (t === 'how') { panel.innerHTML = `
+      <div class="player">
+        <div class="demo-stage" id="stage">${demoSVG(p.demo)}</div>
+        <div class="player-side">
+          <p class="eyebrow" id="stepk">Step 1 of 4</p>
+          <p class="step-now" id="stepnow"></p>
+          <div class="step-dots" id="dots">${p.how.map((_, n) => `<button data-step="${n}" aria-label="Step ${n + 1}"></button>`).join('')}</div>
+          <div class="player-ctl">
+            <button class="k-iconbtn" id="sprev" aria-label="Previous step">${icon('back')}</button>
+            <button class="k-iconbtn play" id="pp" aria-label="Pause">${icon('pause')}</button>
+            <button class="k-iconbtn" id="snext" aria-label="Next step">${icon('next')}</button>
+            ${speakBtn(key + '-how', p.how.join(' '), 'Listen', true)}
+          </div>
+        </div>
+      </div>`;
+      const svg = $('#stage svg'), Q = DEMO_CYCLE / 4; let paused = false, last = -1, raf;
+      const paint = (n) => { if (n === last) return; last = n; $('#stepk').textContent = `Step ${n + 1} of 4`; $('#stepnow').textContent = p.how[n];
+        $('#dots').querySelectorAll('button').forEach((d, k) => d.classList.toggle('on', k === n)); };
+      const tick = () => { paint(Math.floor((svg.getCurrentTime() % DEMO_CYCLE) / Q)); raf = requestAnimationFrame(tick); };
+      const go = (n) => { n = (n + 4) % 4; svg.setCurrentTime(n * Q + .05); paint(n); haptic(); };
+      tick(); stop = () => cancelAnimationFrame(raf);
+      $('#snext').onclick = () => go(last + 1); $('#sprev').onclick = () => go(last - 1);
+      $('#dots').onclick = (e) => { const d = e.target.closest('[data-step]'); if (d) go(+d.dataset.step); };
+      $('#pp').onclick = () => { paused = !paused; haptic(); paused ? svg.pauseAnimations() : svg.unpauseAnimations();
+        $('#pp').innerHTML = icon(paused ? 'play' : 'pause'); $('#pp').setAttribute('aria-label', paused ? 'Play' : 'Pause'); };
+    }
+    if (t === 'facts') panel.innerHTML = `<ol class="factlist">${[p.wow, ...p.facts].filter(Boolean).map((f, n) => `<li><button data-say="${key}-${n ? 'fact-' + (n - 1) : 'wow'}" data-text="${esc(f)}"><span class="fn">${String(n + 1).padStart(2, '0')}</span><span>${esc(f)}</span></button></li>`).join('')}</ol>`;
+    if (t === 'health') panel.innerHTML = `
+      <p class="eyebrow">Keeping it healthy</p>
+      <ul class="rows care">${p.care.map((c, n) => `<li><button data-say="${key}-care-${n}" data-text="${esc(c)}">${icon('check')}<span>${esc(c)}</span></button></li>`).join('')}</ul>
+      ${p.ill.length ? `<p class="eyebrow">Related conditions</p><div class="ill-chips">${p.ill.map(k => ILL[k] && `<a class="ill-chip" href="#/ill/${k}">${icon(kindIcon(ILL[k]))}${esc(ILL[k].name)}${icon('next')}</a>`).join('')}</div>` : ''}`;
+  };
+  app.querySelector('.tabs').onclick = (e) => { const b = e.target.closest('[data-tab]'); if (b && b.dataset.tab !== tab) { haptic(); show(b.dataset.tab); } };
+  show(tab); onLeave(() => stop());
+  setTimeout(() => say(key + '-say', p.name + '. ' + p.say, $('.hero-actions .speak')), 300);
 }
 
 const kindIcon = (ill) => ill.kind === 'hurt' ? 'hurt' : ill.kind === 'germ' ? 'germ' : 'heart';
@@ -372,7 +400,8 @@ function playPage() {
     </div></section>`;
 }
 
-const shuffle = (a) => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.random() * (i + 1) | 0; [a[i], a[j]] = [a[j], a[i]]; } return a; };
+function shuffle(a) { return shuffleArr(a); }
+const shuffleArr = (a) => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.random() * (i + 1) | 0; [a[i], a[j]] = [a[j], a[i]]; } return a; };
 const scoreBar = (score, round) => `<div class="score" aria-label="Question ${round + 1} of 10">${Array.from({ length: 10 }, (_, n) => `<i class="${n < score.length ? (score[n] ? 'ok' : 'no') : n === round ? 'now' : ''}"></i>`).join('')}</div>`;
 function finish(game, score) {
   const n = score.filter(Boolean).length, best = store.get('best', {});

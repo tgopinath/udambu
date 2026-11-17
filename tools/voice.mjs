@@ -7,7 +7,7 @@ const LAYERS = [['organs', 'Organs'], ['bones', 'Bones'], ['muscles', 'Muscles']
 const lines = {};
 const add = (id, t) => { lines[id] = t; };
 for (const p of PARTS) {
-  add(`${p.key}-say`, `${p.name}. ${p.say}`); add(`${p.key}-more`, p.more); add(`name-${p.key}`, p.name); add(`find-${p.key}`, `Find the ${p.name}!`); add(`which-${p.key}`, p.how.join(' '));
+  add(`${p.key}-say`, `${p.name}. ${p.say}`); add(`${p.key}-more`, p.more); add(`name-${p.key}`, p.name); add(`find-${p.key}`, `Find the ${p.name}!`); add(`which-${p.key}`, p.how.join(' ')); add(`${p.key}-how`, p.how.join(' ')); if (p.wow) add(`${p.key}-wow`, p.wow);
   p.how.forEach((t, n) => add(`${p.key}-how-${n}`, t)); p.facts.forEach((t, n) => add(`${p.key}-fact-${n}`, t)); p.care.forEach((t, n) => add(`${p.key}-care-${n}`, t));
 }
 for (const i of ILLNESSES) {

@@ -17,7 +17,7 @@ const ON_LOAD = null, SEED = '';
 const SHOTS_LIST = [
   { file: 'body', hash: '#/', wait: 15000 },
   { file: 'heart', hash: '#/part/heart', wait: 15000 },
-  { file: 'illness', hash: '#/ill/common-cold' },
+  { file: 'illness', hash: '#/ill/stroke' },
   { file: 'play', hash: '#/play/quiz', wait: 4000, js: `document.querySelector('.opt').click(); await new Promise(r => setTimeout(r, 1200)); window.scrollTo(0, 0);` },
   { file: 'web', hash: '#/', desktop: true, wait: 15000 },
 ];
