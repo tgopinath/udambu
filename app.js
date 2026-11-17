@@ -102,6 +102,22 @@ function openAR(k) {
 }
 document.addEventListener('click', (e) => { const b = e.target.closest('[data-ar]'); if (b) { e.preventDefault(); openAR(b.dataset.ar); } });
 
+// ---------- Android app mode (Material Design 3, from the shared Kolam M3 kit) ----------
+// Only inside the Android app (or ?app=android); in a browser KolamM3.init returns a stub and nothing changes.
+const m3Actions = () => [{ id: 'm3Mute', icon: muted ? 'volume_off' : 'volume_up', label: muted ? 'Auto read-aloud off' : 'Auto read-aloud on',
+  onClick: () => { muteBtn.click(); m3.setActions(m3Actions()); } }];
+const m3 = window.KolamM3 ? KolamM3.init({
+  primary: '#0a8fc7', title: 'Udambu',
+  destinations: [
+    { id: 'body', label: 'Body', icon: 'accessibility_new', href: '#/' },
+    { id: 'parts', label: 'Parts', icon: 'grid_view', href: '#/parts' },
+    { id: 'sick', label: 'Health', icon: 'health_and_safety', href: '#/sick' },
+    { id: 'play', label: 'Quiz', icon: 'quiz', href: '#/play' },
+  ],
+  actions: m3Actions(), icons: ['volume_off', 'volume_up'],
+  hide: ['.topbar', '.tabbar'],
+}) : { enabled: false, setTitle() {}, setActive() {}, setBack() {}, setActions() {} };
+
 // ---------- Router ----------
 const routes = [
   [/^#?\/?$/, home], [/^#\/parts$/, partsPage], [/^#\/part\/([\w-]+)$/, partPage],
@@ -118,12 +134,14 @@ function render() {
   document.querySelectorAll('.tabbar a').forEach(a => a.dataset.tab === tab ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current'));
   const deep = /^#\/(part|ill)\/|^#\/play\//.test(h);
   $('#back').hidden = !deep; document.body.classList.toggle('deep', deep);
+  // Android app (M3): the kit resets its overrides on every route change, so set ours just after it
+  if (m3.enabled) setTimeout(() => { m3.setActive(tab); m3.setBack(/^#\/part\//.test(h) ? '#/parts' : /^#\/ill\//.test(h) ? '#/sick' : /^#\/play\//.test(h) ? '#/play' : null); });
   window.scrollTo(0, 0);
   mountSketchfab(app);
 }
 $('#back').onclick = () => { haptic(); history.length > 1 ? history.back() : (location.hash = '#/'); };
 window.addEventListener('hashchange', render);
-const setTitle = (t) => { $('#title').textContent = t || ''; document.title = t ? `${t} · Udambu` : 'Udambu'; };
+const setTitle = (t) => { $('#title').textContent = t || ''; document.title = t ? `${t} · Udambu` : 'Udambu'; m3.setTitle(t || 'Udambu'); };
 const img3d = (k, cls = '') => `<img class="${cls}" src="img/models/${k}.jpg" alt="" loading="lazy">`;
 // a real 3D model from Sketchfab, turning by itself until the child drags it. The still picture underneath
 // stays until Sketchfab's viewer says the model is drawn (viewer API), so a child never sees a loading screen.
@@ -442,8 +460,8 @@ function confetti(x = innerWidth / 2, y = innerHeight / 2) {
 }
 
 render();
-// Android hardware Back: go back inside the app, leave it from the home screen
-window.Capacitor?.Plugins?.App?.addListener('backButton', () => {
+// Android hardware Back outside M3 mode (the M3 kit handles it in the app): back inside the app, leave from home
+if (!m3.enabled) window.Capacitor?.Plugins?.App?.addListener('backButton', () => {
   if ((location.hash || '#/') === '#/') window.Capacitor.Plugins.App.exitApp(); else history.back();
 });
 if ('serviceWorker' in navigator && location.protocol === 'https:' && !document.documentElement.classList.contains('app')) navigator.serviceWorker.register('sw.js').catch(() => {});
