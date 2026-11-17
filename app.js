@@ -10,8 +10,10 @@ const store = { get(k, d) { try { return JSON.parse(localStorage.getItem('be.' +
 // ---------- App mode (inside the iOS / Android shells) ----------
 (() => {
   const ua = navigator.userAgent, q = new URLSearchParams(location.search).get('app');
-  const ios = q === 'ios' || /Udambu-iOS/.test(ua);
-  const android = q === 'android' || (!ios && (window.Capacitor?.getPlatform?.() === 'android' || /Udambu-Android/.test(ua)));
+  // iOS: the shared Kolam iOS kit decides (Udambu-iOS shell, ?app=ios); it wins over Android when both match
+  const ios = window.KolamIOS ? (KolamIOS.isIOS || KolamIOS.detect(['Udambu-iOS'])) : (q === 'ios' || /Udambu-iOS/.test(ua));
+  const android = !ios && (q === 'android' || window.Capacitor?.getPlatform?.() === 'android' || /Udambu-Android/.test(ua));
+  if (ios) document.documentElement.classList.remove('k-android');
   if (ios || android) document.documentElement.classList.add('app', ios ? 'ios' : 'android');
 })();
 const haptic = (kind = 'tap') => { try { window.webkit?.messageHandlers?.haptic?.postMessage(kind); navigator.vibrate?.(kind === 'error' ? [30, 40, 30] : 12); } catch {} };
@@ -118,6 +120,31 @@ const m3 = window.KolamM3 ? KolamM3.init({
   hide: ['.topbar', '.tabbar'],
 }) : { enabled: false, setTitle() {}, setActive() {}, setBack() {}, setActions() {} };
 
+// ---------- iPhone app mode (Apple HIG, from the shared Kolam iOS kit; local copy in vendor/ios) ----------
+// Only inside the Udambu-iOS shell (or ?app=ios); KolamIOS.init returns null in a browser and nothing changes.
+const IOS_UP = { parts: ['#/parts', 'Parts'], sick: ['#/sick', 'Health'], play: ['#/play', 'Quiz'] };
+const iosIcon = n => icon(n, 'ios-icon');
+const iosActions = () => [{ id: 'iosMute', icon: iosIcon(muted ? 'mute' : 'speaker'), label: muted ? 'Auto read-aloud off' : 'Auto read-aloud on',
+  onClick: () => { muteBtn.click(); iosNav(); } }];
+const ios = document.documentElement.classList.contains('ios') && window.KolamIOS ? KolamIOS.init({
+  appName: 'Udambu', uaTokens: ['Udambu-iOS'],
+  tint: { light: '#0070ac', dark: '#6fd4ff' },
+  tabs: [
+    { id: 'body', label: 'Body', icon: iosIcon('person'), href: '#/' },
+    { id: 'parts', label: 'Parts', icon: 'square.grid.2x2', href: '#/parts' },
+    { id: 'sick', label: 'Health', icon: iosIcon('shield'), href: '#/sick' },
+    { id: 'play', label: 'Quiz', icon: 'star', href: '#/play' },
+  ],
+  currentTab: 'body', content: '#app',
+}) : null;
+let iosState = { title: 'Udambu', up: null };
+function iosNav() {
+  if (!ios) return;
+  const { title, up } = iosState;
+  if (up) KolamIOS.navBar.set({ title, back: { label: up[1], onClick: () => (history.length > 1 ? history.back() : (location.hash = up[0])) }, actions: iosActions(), keepTitle: true });
+  else KolamIOS.navBar.set({ title, large: title !== 'Udambu', actions: iosActions(), keepTitle: true });
+}
+
 // ---------- Router ----------
 const routes = [
   [/^#?\/?$/, home], [/^#\/parts$/, partsPage], [/^#\/part\/([\w-]+)$/, partPage],
@@ -136,12 +163,17 @@ function render() {
   $('#back').hidden = !deep; document.body.classList.toggle('deep', deep);
   // Android app (M3): the kit resets its overrides on every route change, so set ours just after it
   if (m3.enabled) setTimeout(() => { m3.setActive(tab); m3.setBack(/^#\/part\//.test(h) ? '#/parts' : /^#\/ill\//.test(h) ? '#/sick' : /^#\/play\//.test(h) ? '#/play' : null); });
+  if (ios) {   // root pages: the page's own heading becomes the large title (the page copy is hidden in styles.css)
+    const ph = app.querySelector('.page-head h1');
+    if (ph && !deep) iosState.title = ph.textContent;
+    KolamIOS.tabBar.select(tab); iosState.up = deep ? IOS_UP[tab] : null; iosNav(); KolamIOS.enhance(app);
+  }
   window.scrollTo(0, 0);
   mountSketchfab(app);
 }
 $('#back').onclick = () => { haptic(); history.length > 1 ? history.back() : (location.hash = '#/'); };
 window.addEventListener('hashchange', render);
-const setTitle = (t) => { $('#title').textContent = t || ''; document.title = t ? `${t} · Udambu` : 'Udambu'; m3.setTitle(t || 'Udambu'); };
+const setTitle = (t) => { $('#title').textContent = t || ''; document.title = t ? `${t} · Udambu` : 'Udambu'; m3.setTitle(t || 'Udambu'); iosState.title = t || 'Udambu'; };
 const img3d = (k, cls = '') => `<img class="${cls}" src="img/models/${k}.jpg" alt="" loading="lazy">`;
 // a real 3D model from Sketchfab, turning by itself until the child drags it. The still picture underneath
 // stays until Sketchfab's viewer says the model is drawn (viewer API), so a child never sees a loading screen.

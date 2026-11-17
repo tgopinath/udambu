@@ -1,5 +1,5 @@
 // Offline cache for the web version (the phone apps carry their files inside).
-const CACHE = 'udambu-v3';
+const CACHE = 'udambu-v4-ios';
 self.addEventListener('install', e => self.skipWaiting());
 self.addEventListener('activate', e => e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim())));
 self.addEventListener('fetch', e => {

@@ -250,8 +250,6 @@ main { width: 100%; max-width: none; margin: 0 auto; padding: var(--space-6) var
 
 /* ---------- inside the phone apps ---------- */
 html.app .brand-mark { display: none; }
-html.ios .topbar { border-bottom-color: transparent; }
-html.ios .tabbar { background: color-mix(in srgb, var(--surface) 82%, transparent); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); }
 @media (prefers-reduced-motion: reduce) { .speak.talking .k-icon { animation: none; } }
 
 /* ================= Pro anatomy look (dark, glass, glowing accents) ================= */
@@ -423,3 +421,35 @@ html.k-android .systile { border-radius: var(--md-sys-shape-corner-large); }
 html.k-android .systile[aria-selected="true"], html.k-android .game.lead { border-color: var(--md-sys-color-primary); box-shadow: inset 0 0 0 1px var(--md-sys-color-primary); }
 html.k-android .opt { border-radius: var(--md-sys-shape-corner-medium); background: var(--md-sys-color-surface-container-low); border-color: var(--md-sys-color-outline-variant); }
 html.k-android .k-btn-primary { box-shadow: none; }
+
+/* ---------- iPhone app mode (Apple HIG) ----------
+   vendor/ios/kolam-ios.css (loaded after this file) builds the navigation bar and the Liquid Glass tab bar and maps
+   the Kolam tokens onto iOS system colours (Udambu stays dark). Here Udambu's own components get iOS shapes.
+   Only html.k-ios (inside the iPhone app, or ?app=ios) is touched; the website keeps its Kolam look. */
+html.k-ios .topbar, html.k-ios .tabbar { display: none; } /* nav bar + tab bar + edge swipe replace them */
+html.k-ios body { padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)); font-family: var(--ios-font); }
+html.k-ios main { padding: 8px 16px 32px; }
+html.k-ios .page-head h1 { display: none; } /* shown as the navigation bar's large title */
+html.k-ios .page-head { align-items: center; }
+html.k-ios .hero3d, html.k-ios .hero-model { margin-top: -8px; }
+html.k-ios .display { font: 700 34px/41px var(--ios-font-display); letter-spacing: .011em; }
+html.k-ios .eyebrow { font: 600 13px/18px var(--ios-font); letter-spacing: 0; text-transform: none; }
+html.k-ios .lede, html.k-ios .muted { font-family: var(--ios-font); }
+html.k-ios .speak, html.k-ios .ar-btn { min-height: 44px; border-radius: 999px; font: 600 17px/22px var(--ios-font); letter-spacing: -.024em; }
+html.k-ios .speak { background: color-mix(in srgb, var(--ios-tint) 16%, transparent); border: 0; color: var(--ios-tint); box-shadow: none; }
+html.k-ios .speak .k-icon, html.k-ios .ar-btn .k-icon { color: currentColor; }
+html.k-ios .ar-btn { background: var(--ios-tint-fill); color: var(--ios-on-tint); border: 0; box-shadow: none; }
+html.k-ios .speak:active, html.k-ios .ar-btn:active, html.k-ios .pcard:active, html.k-ios .irow:active { opacity: .6; }
+/* gray capsules for the filter rows; segmented control for .seg */
+html.k-ios .sysnav a, html.k-ios .jump a { min-height: 34px; border-radius: 999px; border: 0; background: var(--ios-fill3); color: var(--ios-label); font: 500 15px/34px var(--ios-font); box-shadow: none; }
+html.k-ios .sysnav a[aria-current], html.k-ios .sysnav a[aria-selected="true"] { background: var(--ios-tint-fill); color: var(--ios-on-tint); }
+html.k-ios .seg { background: var(--ios-fill3); border-radius: 999px; padding: 2px; gap: 0; }
+html.k-ios .seg button { min-height: 32px; border: 0; border-radius: 999px; background: transparent; box-shadow: none; font: 500 13px/1.2 var(--ios-font); color: var(--ios-label); }
+html.k-ios .seg button[aria-selected="true"] { background: #636366; color: var(--ios-label); font-weight: 600; box-shadow: 0 3px 8px rgba(0,0,0,.12); }
+/* inset grouped cards */
+html.k-ios .pcard, html.k-ios .game, html.k-ios .irow, html.k-ios .note, html.k-ios .demo-stage, html.k-ios .lesson, html.k-ios .prevnext a, html.k-ios .ill-chip, html.k-ios .opt { border-radius: var(--ios-radius-card, 26px); border-color: transparent; background: var(--ios-grouped2); backdrop-filter: none; -webkit-backdrop-filter: none; box-shadow: none; }
+html.k-ios .irow, html.k-ios .opt { border-radius: 12px; }
+html.k-ios .block { background: transparent; border-top-color: var(--ios-sep); }
+html.k-ios .systile { border-radius: 22px; }
+html.k-ios .systile[aria-selected="true"], html.k-ios .game.lead { border-color: var(--ios-tint); box-shadow: inset 0 0 0 1px var(--ios-tint); }
+html.k-ios .k-btn-primary { box-shadow: none; }
