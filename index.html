@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Udambu</title>
-  <meta name="description" content="A human body atlas in real 3D: what every part does, how it works, key figures and common conditions.">
+  <meta name="description" content="Udambu: the human body in two levels. Explore explains every part in plain words with real 3D, voice, AR and a quiz; the Lab is a 3D and VR atlas of 2,827 structures for students.">
   <meta name="theme-color" content="#06080c">
   <link rel="icon" href="icon.svg" type="image/svg+xml">
   <link rel="manifest" href="manifest.webmanifest">
@@ -21,8 +21,11 @@
   <header class="topbar">
     <button class="k-iconbtn back" id="back" aria-label="Back" hidden></button>
     <a class="brand" href="#/" aria-label="Udambu home"><span class="brand-mark" aria-hidden="true"></span><span class="brand-name">Udambu</span></a>
+    <nav class="level" aria-label="Level"><a href="#/" aria-current="page">Explore</a><a href="lab/" data-lab-link>Lab</a></nav>
     <span class="topbar-title" id="title"></span>
+    <a class="k-iconbtn" id="searchBtn" href="#/search" aria-label="Search"></a>
     <button class="k-iconbtn" id="mute" aria-label="Voice on" aria-pressed="false"></button>
+    <a class="k-iconbtn" id="settingsBtn" href="#/settings" aria-label="Settings"></a>
   </header>
   <main id="app" tabindex="-1"></main>
   <nav class="k-bottomnav tabbar" aria-label="Main">
@@ -30,8 +33,11 @@
     <a href="#/parts" data-tab="parts"><span class="k-pip" data-icon="grid"></span>Parts</a>
     <a href="#/sick" data-tab="sick"><span class="k-pip" data-icon="germ"></span>Health</a>
     <a href="#/play" data-tab="play"><span class="k-pip" data-icon="star"></span>Quiz</a>
+    <a href="lab/" data-tab="lab" data-lab-link><span class="k-pip" data-icon="cube"></span>Lab</a>
   </nav>
   <div class="toast-wrap" id="toast" aria-live="polite"></div>
+  <!-- One shared layer for Explore and the Lab: settings, progress, Explore <-> Lab links, search -->
+  <script src="shared/udambu-shared.js"></script>
   <script src="parts.js"></script>
   <script src="illnesses.js"></script>
   <script src="models.js"></script>

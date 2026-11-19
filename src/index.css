@@ -1,0 +1,58 @@
+@import 'tailwindcss';
+
+/* Udambu's type (Kolam: Lato only), the same files Explore uses. */
+@font-face { font-family: Lato; font-weight: 400; font-display: swap; src: url('../fonts/lato-400.woff2') format('woff2'); }
+@font-face { font-family: Lato; font-weight: 700; font-display: swap; src: url('../fonts/lato-700.woff2') format('woff2'); }
+@font-face { font-family: Lato; font-weight: 900; font-display: swap; src: url('../fonts/lato-900.woff2') format('woff2'); }
+
+/* The Lab shares Explore's dark anatomy theme: near-black stage, glass panels, Udambu cyan. */
+@theme {
+  --font-sans: Lato, 'Noto Sans Tamil', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-weight-medium: 700;
+  --font-weight-semibold: 700;
+  --color-ink: #e9eef5;
+  --color-mute: #9fb0c3;
+  --color-faint: #7d8ea3;
+  --color-panel: #0c1119;
+  --color-panel-2: #151c28;
+  --color-line: #232d3c;
+  --color-accent: #3ec6ff;
+  --color-accent-strong: #0a8fc7;
+  --color-on-accent: #03202e;
+  --color-warn: #fdba74;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  color: var(--color-ink);
+  background: #06080c;
+  -webkit-font-smoothing: antialiased;
+}
+canvas {
+  touch-action: none;
+}
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+input[type='range'] {
+  accent-color: var(--color-accent);
+}
+.scroll-thin {
+  scrollbar-width: thin;
+  scrollbar-color: #2a3a49 transparent;
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -1,269 +1,331 @@
 # Udambu (உடம்பு): architecture
 
-Udambu is a human-body atlas for adults. Each body part has a real 3D model you can turn, a plain-English summary and a fuller anatomy text, key figures, a four-step animation of how it works, facts, care tips and related conditions. There is also a library of common conditions, a teaching quiz, read-aloud for every line, and "View in your room" augmented reality. The main engineering idea: a static app with no build step and no backend. All content lives in plain JavaScript data files, and the heavy work (choosing 3D models, converting them for AR, recording the voice) is done once, offline, by scripts in `tools/`.
+Udambu ("body" in Tamil) explains the human body at two levels in one app:
+
+- **Explore**: the body in plain words for everyone, from about age 5 with a grown-up. 63 parts in 11 systems, each with a real 3D model you can turn, a four-step "how it works" animation, key figures, facts, care tips and related conditions; 49 common conditions; a teaching quiz; every line read aloud; "View in your room" augmented reality on every platform.
+- **Lab**: the student level. A 3D and VR anatomy atlas of 2,827 named structures from open data (BodyParts3D and Z-Anatomy): seven body-system layers loaded on demand, opacity, cross-sections, isolate and hide, build-your-own body, heartbeat and breathing on the real meshes, spaced-repetition study cards, and life-size WebXR on Meta Quest.
+
+Both levels share one home, one top-level switch (Explore | Lab), one tab bar, one settings screen, one progress store, one search, and links both ways: an Explore part page has "See it in the Lab", and a Lab structure has "In plain words" back to Explore.
 
 | Platforms | Stack | Data | Hosting |
 | --- | --- | --- | --- |
-| Web PWA, Android app (Capacitor, bundled), iPhone app (SwiftUI WKWebView, bundled) | Vanilla JS, no framework or bundler, Kolam CSS, Sketchfab Viewer API, model-viewer | Static JS data files; small preferences in localStorage; no server, no accounts | Vercel static site (git-connected), APK on GitHub Releases |
+| Web PWA, Android app (Capacitor 8, bundled), iPhone app (SwiftUI WKWebView, bundled) | Explore: plain JS, no framework. Lab: React 19, React Three Fiber 9, @react-three/xr 6, Zustand, Tailwind 4, Vite 8, TypeScript. Shared: one plain-JS module. Kolam design system (Lato), Kolam M3 and iOS kits | Static data files and 3D models; preferences and progress in localStorage; no server, no accounts | Vercel (git-connected, builds on push), APK on GitHub Releases |
+
+## Why this shape
+
+The brief preferred one Vite + React + TypeScript app. The repo is now exactly that at the build level (one `package.json`, one Vite build, one test setup, one `dist/`), but Explore stays plain JavaScript instead of being ported to React:
+
+1. **Nothing that works breaks.** Explore's AR hand-offs (AR Quick Look in the iPhone shell, Scene Viewer intents in the Android shell, model-viewer on the web), the 1,097 recorded voice clips, the SMIL animations and the Sketchfab Viewer API mounting are all tuned plain-JS code. A port would re-test all of it for no user-visible gain.
+2. **The Lab's CSS cannot share a document with Explore.** The Lab is built with Tailwind, whose utility class names (`block`, `hidden`, `grid`, `border`…) collide with Explore's own classes. Two pages on one origin keep each level's styles to itself while sharing everything that matters (storage, links, settings, look).
+3. **Performance.** Explore never downloads the Lab's 1.6 MB 3D engine or its 18 MB of models; the Lab never downloads Explore's data files. Each level loads only what it shows.
+4. **Same-origin sharing is enough.** Settings, progress and bookmarks are plain localStorage on one origin, and the shared module (`shared/udambu-shared.js`) is the single place that defines their shape, the Explore↔Lab links and the search. Explore loads it as a script, the Lab imports it, and Vitest tests it.
+
+Explore pages are hash routes on `index.html` (`#/part/heart`); Lab pages are hash routes on `lab/index.html` (`#/?focus=…`). Hash routing keeps the same files working on Vercel, from Capacitor's local server on Android and from disk inside the iPhone app.
 
 ## System architecture
 
-One `index.html` loads the data files and then `app.js` as ordinary scripts, in order. `app.js` is a small hash router that draws each page into `<main id="app">`. The 3D models are not stored in the app: each one is a Sketchfab embed, driven through Sketchfab's Viewer API. The AR models are the exception: they are prepared files in `ar/`, because AR viewers need a local or downloadable file.
-
-The same web files run in three places. In a browser they keep the Kolam design system. Inside the Android app the Kolam M3 kit switches on Material Design 3, and inside the iPhone app the Kolam iOS kit switches on the Apple HIG look. Both phone apps carry a copy of the web files.
-
 ```mermaid
 flowchart TD
-  subgraph NAT["Where it runs"]
+  subgraph RUN["Where it runs"]
     WEB["Browser, from Vercel"]
-    AND["Android app, Capacitor 8, bundled files"]
-    IOS["iPhone app, WKWebView, bundled files"]
+    AND["Android app, Capacitor 8, bundled dist"]
+    IOS["iPhone app, WKWebView, bundled dist"]
   end
-  subgraph UI["Client UI"]
-    APP["index.html and app.js<br>hash router, 8 routes"]
-    PARTS["demos.js, voice.js, AR hand-off"]
+  subgraph EXP["Explore: index.html, plain JS"]
+    EAPP["app.js hash router, 10 routes"]
+    EDATA["parts, illnesses, quiz, models, ar, demos data files"]
+    EV["voice.js and audio clips"]
   end
-  subgraph DATA["Static content"]
-    D1["parts, illnesses, quiz, models, ar data files"]
-    D2["audio clips, posters, ar models"]
+  subgraph LABP["Lab: lab/index.html, React + R3F"]
+    LUI["LabPage, AboutPage, panels"]
+    L3D["LabCanvas, Body layers, CrossSection, Animator, XR rig"]
+    LENG["engine: anatomy, quiz, physiology, notes"]
   end
-  subgraph ST["On the device"]
-    LS["localStorage be.*"]
-    SW["service worker cache, web only"]
+  SH["shared/udambu-shared.js<br>links, settings, progress, search"]
+  subgraph DEV["On the device"]
+    LS["localStorage<br>udambu:settings, udambu:progress, anatomylab:v1, be.*"]
+    SW["service worker cache, website only"]
   end
-  subgraph EXT["External services"]
-    SF["Sketchfab Viewer API, live 3D"]
-    AV["Native AR viewers<br>Quick Look, Scene Viewer, model-viewer"]
+  subgraph EXT["External"]
+    SF["Sketchfab Viewer API, Explore 3D"]
+    ARV["Native AR viewers<br>Quick Look, Scene Viewer, model-viewer"]
+    XR["WebXR, Meta Quest Browser"]
   end
-  WEB --> APP
-  AND --> APP
-  IOS --> APP
-  APP --> PARTS
-  DATA --> APP
-  APP --> ST
-  APP --> SF
-  PARTS --> AV
+  WEB --> EAPP
+  AND --> EAPP
+  IOS --> EAPP
+  WEB --> LUI
+  AND --> LUI
+  IOS --> LUI
+  EDATA --> EAPP
+  EAPP --> EV
+  EAPP <--> SH
+  LUI <--> SH
+  LUI --> L3D
+  LENG --> LUI
+  SH --> LS
+  L3D --> LS
+  EAPP --> SF
+  EAPP --> ARV
+  L3D --> XR
+  WEB --> SW
 ```
 
-*Everything is static. The only network calls are to Sketchfab for the live 3D, and, on Android AR, from Google's Scene Viewer back to the published site.*
+*The two levels are separate pages on one origin. They talk only through links and through the shared module's localStorage keys.*
 
-## Main user flow
-
-The core job is: pick a body system, open a part, and understand it. From any part you can go to its conditions, play its animation, hear it read aloud, or place it on the floor in AR.
+## Explore and Lab routing
 
 ```mermaid
 flowchart TD
-  S(["Open Udambu"]) --> H["Home: full-body 3D model"]
-  H --> SYS["Pick a body system"]
-  SYS --> C["Part cards for that system"]
-  C --> P["Part page"]
-  P --> T3["Turn the 3D model"]
-  P --> HOW["How it works: 4-step animation"]
-  P --> FX["Facts and care tips"]
-  P --> ILL["Related condition page"]
-  P --> AR["View in your room"]
-  P --> L["Listen"]
-  ILL --> P2["Affected parts"]
-  P2 --> P
+  OPEN(["Open Udambu"]) --> FIRST{"Start level set?"}
+  FIRST -- "not chosen" --> HOME["Explore Home asks: who is learning today?"]
+  FIRST -- "Explore" --> HOME2["Explore Home"]
+  FIRST -- "Lab, once per session" --> LAB["Lab #/"]
+  HOME --> HOME2
+  HOME2 --> PARTS["#/parts, #/part/key"]
+  HOME2 --> HEALTH["#/sick, #/ill/key"]
+  HOME2 --> QUIZ["#/play, #/play/quiz, #/play/which"]
+  HOME2 --> SEARCH["#/search?q="]
+  HOME2 --> SET["#/settings"]
+  PARTS -- "See it in the Lab" --> FOCUS["lab #/?focus=system:base"]
+  SEARCH -- "Lab hit" --> FOCUS
+  FOCUS --> LAB
+  LAB -- "In plain words" --> PARTS
+  LAB --> ABOUT["Lab #/about, sources and licences"]
+  LAB -- "Settings" --> SET
+  LAB -- "Explore switch or tabs" --> HOME2
 ```
 
-*The bottom tabs (Body, Parts, Health, Quiz) are the four roots. Part and condition pages are deep pages with a Back button.*
+*Tabs on every platform: Body, Parts, Health, Quiz, Lab. The web top bar adds the Explore | Lab switch, Search and Settings.*
 
-### Quiz flow
+### The shared layer
 
-The Body quiz picks 10 questions from `quiz.js`: 5 "which part does this", 2 "name the part in the picture" and 3 health-literacy questions with text answers. After every answer a lesson card explains the answer, with the part's picture, a "Turn in 3D" button, Learn more and, when the part has one, AR. A second game, "What does this?", shows a part's animation and asks you to pick the part.
+`shared/udambu-shared.js` sets `globalThis.UdambuShared` and has no DOM code, so the same file runs in Explore, in the Lab bundle and under Vitest (`src/shared/shared.test.ts`).
 
-```mermaid
-flowchart TD
-  Q0(["Start quiz"]) --> PICK["Draw 5 + 2 + 3 questions, shuffle"]
-  PICK --> ASK["Ask question, optional read-aloud"]
-  ASK --> ANS["Tap an answer"]
-  ANS --> LES["Lesson card: correct or the right answer, explained"]
-  LES --> MORE{"10 done?"}
-  MORE -- No --> ASK
-  MORE -- Yes --> SC["Score out of 10, best kept in localStorage"]
-```
-
-## Data flow and state
-
-A part page shows a still poster image (`img/models/<key>.jpg`) at once. The Sketchfab script is loaded only once, the first time a page has a model. The iframe sits on top of the poster and is faded in only when Sketchfab fires `viewerready`, so the reader never sees a loading screen. If the Viewer API fails, the iframe falls back to the plain embed URL and shows after four seconds.
+| Piece | What it does |
+| --- | --- |
+| `CROSSLINKS` | Explore part key → `[system, base name]` in the Lab model, for 52 of the 63 parts. `null` base means "show the whole layer" (Skeleton, Muscles, Lymph nodes, Ligaments). Parts the male atlas does not model (skin, uterus, blood, cells, DNA…) have no link. A test checks every target exists in `src/data/structures.json`. |
+| `exploreFor(base, system)` | Lab structure → Explore part: exact targets first, then structure families (any vertebra → Spine, any lobe of a lung → Lungs, any artery or vein → Blood vessels, any lymph node group → Lymph nodes…). More than half of the 2,827 structures link back. |
+| `labHref`, `exploreHref`, `parseFocus` | Build and read the deep links. In the phone apps the file name is spelled out (`lab/index.html`, `../index.html`) because a folder URL does not open its index there. |
+| `settings` (`udambu:settings`) | Start level (Explore, Lab or ask), automatic read-aloud, VR comfort (snap or smooth turn, snap angle, teleport, vignette). The Lab store reads VR comfort from here. |
+| `progress` (`udambu:progress`) | Explore parts opened, best quiz scores, Lab study totals (answered, correct, learned) and Lab links used. Resetting the Lab also clears the Lab's study cards in `anatomylab:v1`. |
+| `search(q, sources)` | One ranked name search over Explore parts (name, anatomical term, key), conditions and Lab structures (`shared/lab-names.js`, 1,643 unique names). Lab hits carry the Explore part that explains them. |
 
 ```mermaid
 sequenceDiagram
   participant U as Reader
-  participant R as app.js router
-  participant D as parts.js and models.js
-  participant S as Sketchfab
-  U->>R: tap a part card
-  R->>D: look up part and model uid
-  R->>U: page with poster image and hidden iframe
-  R->>S: load viewer script once
-  S-->>R: Sketchfab client ready
-  R->>S: init model uid, autospin, no UI
-  S-->>R: viewerready
-  R->>U: fade in the live 3D model
+  participant E as Explore app.js
+  participant S as UdambuShared
+  participant L as Lab LabPage
+  participant B as Lab Body layers
+  U->>E: open Heart, tap See it in the Lab
+  E->>S: labHref heart
+  S-->>E: lab/#/?focus=cardiovascular:Left ventricle
+  E->>L: navigate
+  L->>L: load structure index lazily
+  L->>S: parseFocus, resolve to cardiovascular:Left ventricle
+  L->>B: switch on the cardiovascular layer, select, frame
+  L->>S: progress.setLab opened
+  U->>L: tap In plain words
+  L->>S: exploreFor Left ventricle
+  S-->>L: heart
+  L->>E: ../#/part/heart
 ```
 
-*mountSketchfab in app.js. Screenshot runs with a shot= query skip the live model and keep the poster.*
+## Explore
 
-### Read-aloud
+One `index.html` loads the shared module, the data files and then `app.js` as ordinary scripts. `app.js` is a small hash router that draws each page into `<main id="app">`.
 
-Every readable line has a stable id such as `heart-say` or `quiz-ok-12`. If the id is in `audio/clips.js`, the recorded clip plays, so the voice sounds the same on every phone. Otherwise the device's own speech synthesis reads the text. Tapping the same button again stops it. Pages do not read themselves aloud unless the reader turns auto read-aloud on; Listen buttons always work.
+```mermaid
+flowchart TD
+  H["Home: full-body 3D model, facts, level chooser"] --> SYS["Pick a body system"]
+  SYS --> C["Part cards"]
+  C --> P["Part page"]
+  P --> T3["Turn the 3D model"]
+  P --> HOW["How it works: 4-step animation"]
+  P --> ILL["Related condition"]
+  P --> AR["View in your room"]
+  P --> L["Listen"]
+  P --> LAB["See it in the Lab"]
+  H --> LP["Go deeper in the Lab, your progress"]
+```
+
+**3D.** Each part shows a still poster (`img/models/<key>.jpg`) at once; the Sketchfab Viewer API script loads once, and the iframe fades in only when Sketchfab fires `viewerready`. Models are hand-picked and credited per page (`models.js`).
+
+**Read-aloud.** Every readable line has a stable id (`heart-say`, `quiz-ok-12`). If `audio/clips.js` lists it, the recorded clip plays (macOS Samantha, so it sounds the same on every phone); otherwise the device voice reads it. Pages read themselves only when "Read pages aloud automatically" is on in Settings.
 
 ```mermaid
 flowchart TD
   B["Listen tapped, id and text"] --> K{"id in VOICE_CLIPS?"}
-  K -- Yes --> A["Play audio id.m4a"]
-  K -- No --> SP["Device speech, en-IN, rate 0.9"]
+  K -- Yes --> A["Play audio/id.m4a"]
+  K -- No --> SP["Device speech, en-IN"]
   A -- "play fails" --> SP
 ```
 
-| Where | Key | What it holds |
-| --- | --- | --- |
-| localStorage | `be.muted` | Auto read-aloud off or on (off by default) |
-| localStorage | `be.homeSys` | Body system last chosen on Home |
-| localStorage | `be.sickFilter` | Conditions filter: all, infections, inside the body, injuries |
-| localStorage | `be.best` | Best score per game (`quiz`, `which`) |
-| sessionStorage | `k-app-mode`, `kolam.app` | Forced app look from `?app=android`, `?app=ios` or `?app=web` (set by the Kolam kits) |
-| Cache Storage | `udambu-v4-ios` | Service worker cache of same-origin GET responses (website only) |
-| Static files | JS data, `audio/`, `img/`, `ar/` | All content. Nothing is written to a server. |
+**Quiz.** The Body quiz draws 5 pick-the-part, 2 name-the-picture and 3 health-literacy questions; a lesson card explains every answer with the part's picture, Turn in 3D, Learn more and AR. "What does this?" shows an animation and asks for the part. Best scores go to the shared progress store.
 
-## Key modules
-
-| File / module | Responsibility |
-| --- | --- |
-| `index.html` | Top bar, `<main id="app">`, bottom tab bar; loads the kits, the data files and `app.js` in order. Forces the dark theme. |
-| `app.js` | App-mode detection, icons, hash router (8 routes), every page, Sketchfab mounting, AR, quiz games, simple Web Audio tones, Android Back handling, service worker registration. |
-| `parts.js` | 11 body systems and the parts. Each part has name, anatomical term, system, location, key figures, summary, fuller text, four "how" steps, facts, care tips, related conditions and its demo. |
-| `illnesses.js` | 49 conditions (19 infections, 25 conditions of the body, 5 injuries) with overview, cause, symptoms, diagnosis and treatment, prevention, when to see a doctor, and the parts affected. |
-| `quiz.js` | 86 questions: 46 pick-the-part, 18 name-the-picture, 22 health-literacy questions with an explanation each. |
-| `models.js` | Sketchfab model per part (uid, title, author, licence). `body` is the full-body model on Home. |
-| `ar.js` | The 42 AR-ready models (41 parts plus the Home skeleton) with credits. |
-| `demos.js` | 31 SVG animations using SMIL. Each loops for 8 seconds in four 2-second steps that match the part's four "how" captions. |
-| `voice.js` + `audio/clips.js` | Plays recorded clips, falls back to device speech. |
-| `sw.js`, `manifest.webmanifest` | Offline cache and install data for the website. |
-| `vendor/` | Kolam tokens and CSS, Kolam M3 kit, Kolam iOS kit, model-viewer, Lato fonts (in `fonts/`). |
-| `tools/` | Offline scripts: model search, AR conversion, voice recording, icons, screenshots. Not shipped. |
-
-The part page uses `demoSVG(p.demo)` and reads the SVG clock with `getCurrentTime()` on every animation frame to show which of the four steps is playing. Step buttons jump with `setCurrentTime()`, and pause uses `pauseAnimations()`. Because it is plain SVG with SMIL, it runs the same in browsers, Android WebView and iOS WKWebView.
-
-### Augmented reality per platform
-
-"View in your room" is offered only for parts listed in `ar.js`. Each platform uses its own native AR viewer, so the app has no AR code of its own beyond the hand-off.
+### Augmented reality (Explore)
 
 ```mermaid
 flowchart TD
-  T["View in your room"] --> W{"Which app mode?"}
-  W -- "iPhone app" --> I1["webkit message ar, file ar/key.usdz"]
-  I1 --> I2["Swift: QLPreviewController with ARQuickLookPreviewItem"]
-  I2 --> I3["AR Quick Look places the USDZ from the app bundle"]
+  T["View in your room"] --> W{"Which app?"}
+  W -- "iPhone app" --> I1["webkit message ar with ar/key.usdz"]
+  I1 --> I2["Swift: QLPreviewController + ARQuickLookPreviewItem"]
+  I2 --> I3["AR Quick Look places the bundled USDZ"]
   W -- "Android app" --> A1["intent URL to Scene Viewer"]
-  A1 --> A2["MainActivity catches intent, starts ARCore Scene Viewer"]
-  A2 --> A3["Scene Viewer downloads glb from udambu.vercel.app"]
-  A2 -. "no ARCore" .-> A4["Google app, then browser fallback URL"]
-  W -- "Browser" --> B1["Load model-viewer script on first use"]
-  B1 --> B2["Sheet with ar/key.glb, ios-src usdz"]
+  A1 --> A2["MainActivity starts ARCore Scene Viewer"]
+  A2 --> A3["Scene Viewer downloads the glb from udambu.vercel.app"]
+  A2 -. "no ARCore" .-> A4["Google app, then browser fallback"]
+  W -- "Browser" --> B1["Load model-viewer on first use"]
+  B1 --> B2["Sheet with ar/key.glb and ios-src usdz"]
   B2 --> B3["WebXR, Scene Viewer or Quick Look on phones; turn and zoom on desktop"]
 ```
 
-*The Android app does not ship the AR files; Scene Viewer fetches the published copy. The iPhone app ships only the USDZ files; the website serves both.*
+*42 AR models (41 parts plus the Home skeleton), cut to about 80,000 triangles. The Android app does not ship them; the iPhone app ships only the USDZ files.*
+
+## Lab
+
+```
+src/ui/ (React DOM, Tailwind)          src/three/ (R3F + XR)
+        \                                /
+         src/state/ (Zustand: labStore persisted, viewStore transient, playerStore)
+                        |
+         src/engine/ (pure TS: anatomy, quiz, physiology, notes), unit-tested
+                        |
+         src/data/structures.json (generated from the GLBs by tools/build-index.mjs)
+                        |
+         src/shared/udambu.ts (typed access to shared/udambu-shared.js)
+```
+
+| Concern | Where |
+| --- | --- |
+| Structure data, names, search, neighbours, body areas | `src/engine/anatomy.ts` |
+| Study notes (about 50 textbook facts) | `src/engine/notes.ts` (a test checks every key is a real model name) |
+| Quizzes and Leitner spaced repetition | `src/engine/quiz.ts` |
+| Heartbeat and breathing timing | `src/engine/physiology.ts` |
+| Layer loading, tissue materials, BVH picking | `src/three/body/Body.tsx`, `materials.ts` |
+| Visibility and highlight without re-rendering 2,800 meshes | `src/three/body/registry.ts` |
+| Cross-section (one shared clipping plane) | `src/three/body/CrossSection.tsx` |
+| Animations on the real meshes | `src/three/body/Animator.tsx` |
+| Camera: orbit, focus, standard views | `src/three/LabCanvas.tsx` |
+| VR rig and the panel that follows you | `src/three/rig/XRRig.tsx`, `src/three/VrPanel.tsx`, `src/three/xr.ts` |
+| Explore deep links in | `src/ui/focus.ts` |
+| Native looks | `src/ui/native.ts`, `src/native.css` |
+| Test bridge `window.__al` (dev builds or `?e2e`) | `src/three/debug.ts` |
+
+**Load on demand.** The structure index (85 kB gzipped) loads with the Lab page; the 3D engine (`LabCanvas`, three.js, R3F) is a lazy chunk; each of the seven Draco-compressed layers (0.4 to 5.6 MB) loads only when switched on, and only the skeleton is on at first. The heavy cardiovascular (2.5 M triangles) and nervous (1.4 M) layers stay opt-in. One shared material per system and tissue makes opacity and clipping one change per layer, and BVH trees are built in idle time.
+
+**Picking.** One handler on the body group for mouse, touch and XR rays: it skips hidden meshes, see-through layers (opacity under 0.35) and anything cut away by the section.
+
+### VR
+
+```mermaid
+flowchart TD
+  CHK["detectXRSupport: navigator.xr immersive-vr?"] -- "yes, e.g. Quest Browser" --> BTN["Enter VR button"]
+  CHK -- "no: phones, phone apps, most desktops" --> NONE["No VR button"]
+  BTN --> SESS["xrStore.enterVR, 72 to 90 Hz, foveation"]
+  SESS --> RIG["XRRig: life-size body on a plinth, start 1.4 m away"]
+  RIG --> TP["Push stick forward: teleport arc, trigger to land"]
+  RIG --> TURN["Snap 30 or 45 degrees, or smooth with vignette, from shared Settings"]
+  RIG --> RAY["Controller ray or hand pinch: same pointer events as mouse"]
+  RAY --> PANEL["VR panel: layers, isolate, heartbeat, breathing, study answers, Exit VR"]
+```
+
+*Development builds use the IWER Meta Quest 3 emulator (`/lab/?xr=emulate#/`); production builds strip it. VR has been tested in the emulator, not on a physical headset.*
+
+## Native looks
+
+The same pages run in three places. In a browser they keep the Kolam look (dark anatomy theme, Lato, Udambu cyan). Inside the Android app the Kolam M3 kit switches on Material Design 3; inside the iPhone app the Kolam iOS kit switches on the Apple HIG look. Both kits run before the first paint in both pages, and both pages give the kit the same five destinations (Body, Parts, Health, Quiz, Lab), so moving between levels feels like one app. `?app=android`, `?app=ios` and `?app=web` force a look for testing.
+
+| Level | Android (M3) | iPhone (HIG) |
+| --- | --- | --- |
+| Explore | M3 top app bar with Search, read-aloud and Settings actions; navigation bar; M3 shapes and colours from `#0a8fc7` | Large titles, Liquid Glass tab bar, back button with centred title, haptics |
+| Lab | Top app bar "Lab" with Settings; the same navigation bar; the Lab's panel colours point at M3 colour roles and its buttons take M3 shapes (`src/native.css`) | Navigation bar "Lab" with Settings; the same tab bar; panels use iOS grouped colours and the tint |
 
 ## Platforms
 
-| Platform | How it is built | Look |
-| --- | --- | --- |
-| Web / PWA | Static files on Vercel. Service worker registered only on https and outside the phone apps. | Kolam design system, dark anatomy theme, Lato. |
-| Android | Capacitor 8 shell in `android-wrappers/udambu`, app id `com.gopinath.udambu`, min SDK 24, target SDK 36. **Bundled**: `sync-web.sh` copies the web files into `www/` (without `ar/`, `tools/`, `sw.js`) and builds a debug APK. The WebView user agent gets `Udambu-Android`. A custom `BridgeWebViewClient` in `MainActivity` turns `intent://` links into Android intents for Scene Viewer. | Material Design 3 from the Kolam M3 kit (`html.k-android`): app bar, navigation bar with four destinations, Back, M3 colours from `#0a8fc7`. The kit hides the web top bar and tab bar. |
-| iPhone | SwiftUI app in `Udambu-iOS` (iOS 17+) with a WKWebView that loads the bundled `web/` folder from the file system. `sync-web.sh` copies the web files (without `*.glb`) and builds for the simulator. It injects `window.KolamShell`, sets the UA token `Udambu-iOS`, handles `haptic` and `ar` messages, opens outside links in Safari's in-app viewer, and plays voice even with the silent switch on. | Apple HIG from the Kolam iOS kit (`html.k-ios`): large titles, Liquid Glass tab bar, back button with centred title, haptics. |
+| Platform | How it is built |
+| --- | --- |
+| Web / PWA | `npm run build` on Vercel: Vite builds the Lab into `dist/lab/`, then `tools/assemble.mjs` copies Explore (no build step) into `dist/`. The service worker (website only) caches same-origin GETs, stale-while-revalidate, so a Lab layer opened once works offline. |
+| Android | Capacitor 8 shell in `~/Documents/android-wrappers/udambu`, app id `com.gopinath.udambu`. **Bundled**: `sync-web.sh` runs `npm run build`, copies `dist/` into `www/` (without `ar/` and `sw.js`) and builds a debug APK. UA token `Udambu-Android`. A custom `BridgeWebViewClient` turns `intent://` links into Scene Viewer intents. |
+| iPhone | SwiftUI app in `Udambu-iOS` (iOS 17+), WKWebView loading the bundled `web/` folder from disk. `sync-web.sh` builds, copies `dist/` (without the AR `.glb` files and `sw.js`) and builds for the simulator. It injects `window.KolamShell`, sets the UA token `Udambu-iOS`, handles `haptic` and `ar` messages, opens outside links in Safari's viewer and plays voice with the silent switch on. |
 
-How the look is chosen: both kit scripts run in `<head>` before first paint. The M3 kit adds `k-android` in the Capacitor Android app, an Android WebView or an installed Android PWA. The iOS kit adds `k-ios` when it sees the shell. `app.js` then adds `app` plus `ios` or `android`, and iOS wins if both match. In any ordinary browser neither kit changes anything. `?app=android`, `?app=ios` and `?app=web` force a look for testing.
-
-## Data sources and APIs
+## Data sources and licences
 
 | Source | Used for | Licence / key |
 | --- | --- | --- |
-| Sketchfab Viewer API 1.12.1 | The live 3D model on Home, every part page and quiz lessons | No key. Each model is shown in Sketchfab's own player with its author and licence credited on the page. Licences vary per model (CC Attribution, Standard, Editorial and others, listed in `models.js`). |
-| Sketchfab search API | Finding candidate models offline (`tools/find3d.py`, `tools/find-ar.py`) | No key, used only by the tools |
-| Objaverse mirror of Sketchfab models | Source files for the AR models | Only openly licensed downloadable models; the 42 chosen are 41 CC Attribution and 1 CC Attribution-ShareAlike, credited in the AR sheet |
-| Google Scene Viewer (ARCore) | AR in the Android app | No key; needs Google Play Services for AR or the Google app |
-| Apple AR Quick Look | AR in the iPhone app and iPhone Safari | Built into iOS |
-| model-viewer (vendored) | The web AR sheet | Apache 2.0, loaded only when needed |
-| macOS voice "Samantha" | Recorded read-aloud clips | Generated locally with `say` and `afconvert` |
-| WHO and NHS guidance | Basis for the health-literacy quiz and condition text | Written as general information, not medical advice |
+| BodyParts3D (DBCLS) via Z-Anatomy and the 3d-anatomy project | The Lab's seven layer models and all 2,827 names | Models CC BY-SA 2.1 JP and CC BY-SA 4.0, with non-commercial components (University of Dundee inner ear CC BY-NC-SA 4.0, kidney CC BY-NC 4.0), so used here under **CC BY-NC-SA 4.0**. Attribution on the Lab's Sources page; the upstream notice ships unmodified at `lab/models/License.txt`. |
+| Sketchfab Viewer API | Explore's live 3D on Home, part pages and quiz lessons | No key. Each model credited on its page with author and licence (`models.js`). |
+| Objaverse mirror of Sketchfab | Explore's 42 AR models | 41 CC Attribution, 1 CC Attribution-ShareAlike, credited in the AR sheet |
+| Google Scene Viewer, Apple AR Quick Look, model-viewer (Apache 2.0) | AR on Android, iPhone and the web | No keys |
+| macOS voice "Samantha" | Recorded read-aloud clips | Generated locally (`tools/voice.mjs`) |
+| WHO and NHS guidance | Basis of the condition pages and health quiz | Written as general information, not medical advice |
+| Study notes | About 50 Lab structures | Written for the app from standard textbook facts |
+
+## Data and asset pipeline
+
+```mermaid
+flowchart TD
+  subgraph LABD["Lab"]
+    GLB["public/lab/models/*.glb, Draco"] --> BI["tools/build-index.mjs reads each GLB's JSON chunk"]
+    BI --> SJ["src/data/structures.json: id, base, side, system, tissue, bounding box"]
+    BI --> LN["shared/lab-names.js: unique names for Explore's search"]
+  end
+  subgraph EXPD["Explore"]
+    QJ["tools/queries.json"] --> F3["find3d.py: Sketchfab search, contact sheets, pick by eye"]
+    F3 --> MJ["models.js, img/models posters"]
+    QJ --> FA["find-ar.py: open-licence models in Objaverse"]
+    FA --> ARM["ar-models.mjs: glTF-Transform, 80k triangles, floor-standing"]
+    ARM --> ARG["ar/key.glb"]
+    ARG --> ARU["ar-usdz.mjs"] --> ARZ["ar/key.usdz"]
+    TXT["parts.js, illnesses.js, quiz.js"] --> VM["voice.mjs: re-records changed lines only"] --> M4A["audio/id.m4a, audio/clips.js"]
+  end
+```
+
+*All of this runs on the developer's Mac; nothing in `tools/` ships. The Lab never invents anatomy: geometry and names come only from the model files.*
+
+## Build, test and deploy
+
+```mermaid
+flowchart TD
+  SRC["udambu repo: Explore files, src/, lab/, shared/, public/lab/"] --> T["npm test: Vitest, engine + shared layer"]
+  SRC --> E2E["npm run test:e2e: Playwright in Chrome, Explore + Lab + VR emulator"]
+  SRC --> GH["push to GitHub tgopinath/udambu, main"]
+  GH --> V["Vercel: npm ci, npm run build"]
+  V --> VB["tsc -b, vite build: dist/lab"]
+  VB --> AS["tools/assemble.mjs: Explore into dist"]
+  AS --> WEB["udambu.vercel.app and /lab/"]
+  SRC --> SA["android-wrappers/udambu/sync-web.sh"]
+  SA --> APK["udambu.apk on GitHub release v1.0.0"]
+  SRC --> SI["Udambu-iOS/sync-web.sh"]
+  SI --> APP["Udambu.app for the simulator"]
+```
+
+| Command | What it does |
+| --- | --- |
+| `npm run dev` | Vite dev server: Explore at `/`, Lab at `/lab/` |
+| `npm test` | Vitest: Lab engine tests, the shared layer (links both ways, settings, progress, search, VR comfort reaching the Lab store) |
+| `npm run test:e2e` | Playwright: Explore pages, AR button, voice clip, quiz, Explore→Lab→Explore links, search, settings, Lab layers, sections, study, build-your-own, animations, VR emulator |
+| `npm run build` | Typecheck, Vite build of the Lab, assemble Explore into `dist/` |
+| `npm run index` | Rebuild the Lab structure index and name list after model changes |
+
+`vercel.json` sets the build, caches `lab/assets` for a year and the models for a week, and gives `/lab/` its own Content Security Policy (self-hosted scripts, WebAssembly for Draco, the jsDelivr CDN for XR controller models). Explore has no CSP header because it embeds Sketchfab.
 
 ## Offline, performance, privacy and accessibility
 
-**Offline.** On the website a service worker serves from cache first and refreshes the cache in the background (stale-while-revalidate) for same-origin GET requests. The phone apps carry their files, so text, pictures, animations and voice work offline. The live 3D needs the internet in every version; the poster image stays when it is offline. Android AR also needs the internet, because Scene Viewer downloads the model.
-
-**Performance.** No framework and no bundler. The Sketchfab script loads once, only when a page has a model. model-viewer (about 1 MB) loads only when someone opens the AR sheet. Card images are lazy-loaded JPEG posters. AR models are cut to about 80,000 triangles and 1024 px textures (the 42 GLB files total about 63 MB, the USDZ files about 56 MB) and are downloaded only when used.
-
-**Privacy.** No accounts, no analytics code in the app, no server. Preferences stay in the browser. Sketchfab embeds are set with `dnt: 1`. The only third parties are Sketchfab (3D) and, on Android AR, Google's Scene Viewer.
-
-**Accessibility.** Every line can be heard. Icon buttons have labels; tabs use `role="tab"` and `aria-selected`; the current tab has `aria-current`; toasts use `aria-live`. The AR sheet is a labelled dialog that closes with Escape. The speaking animation stops under reduced motion. On iPhone the shell passes Reduce Transparency and Bold Text settings to the iOS kit. Not verified from code: full keyboard and screen-reader testing of the 3D iframes.
-
-## Build and deploy
-
-There is no build step for the website. A push to `main` on GitHub makes Vercel publish the folder as it is. The phone apps are rebuilt by hand with each shell's `sync-web.sh`. The Android APK is uploaded to the GitHub release so the portfolio's download link stays the same.
-
-```mermaid
-flowchart TD
-  Dev["udambu folder"] --> GH["GitHub tgopinath/udambu, main"]
-  GH --> V["Vercel builds on push"]
-  V --> Web["udambu.vercel.app"]
-  Dev --> SA["Android sync-web.sh"]
-  SA --> CAP["npx cap sync, Gradle assembleDebug"]
-  CAP --> APK["udambu.apk on GitHub Releases"]
-  Dev --> SI["iOS sync-web.sh"]
-  SI --> XC["xcodebuild for the simulator"]
-  XC --> APP["Udambu.app"]
-```
-
-### Asset pipeline
-
-The tools run on the developer's Mac. Nothing here runs in the app.
-
-```mermaid
-flowchart TD
-  QJ["tools/queries.json, search terms per part"] --> F3["find3d.py: Sketchfab search, contact sheets"]
-  F3 --> PICK1["Pick by eye"]
-  PICK1 --> MJ["models.js and img/models posters"]
-  QJ --> FA["find-ar.py: downloadable, open licence, in Objaverse"]
-  FA --> PICK2["Pick by eye"]
-  PICK2 --> SRC["ar-sources.json and source glb files"]
-  SRC --> ARM["ar-models.mjs: glTF-Transform"]
-  ARM --> GLB["ar/key.glb, 80k triangles, on the floor"]
-  GLB --> ARU["ar-usdz.mjs: three.js USDZExporter, usdcrush"]
-  ARU --> USDZ["ar/key.usdz"]
-```
-
-*ar-models.mjs drops unwanted nodes, converts old spec-gloss materials, welds and simplifies with meshoptimizer, turns opaque textures into 1024 px JPEG, and scales each model to a set height (0.6 m by default, 1.75 m for the skeleton) standing on the floor.*
-
-```mermaid
-flowchart TD
-  TXT["parts.js, illnesses.js, quiz.js"] --> VM["voice.mjs builds every line with an id"]
-  VM --> DIFF{"Text changed or clip missing?"}
-  DIFF -- Yes --> SAY["say -v Samantha, then afconvert to AAC"]
-  SAY --> M4A["audio/id.m4a"]
-  DIFF -- No --> KEEP["Keep the clip"]
-  VM --> CJ["audio/clips.js list of ids"]
-```
-
-*voice.mjs keeps a record of the last text per id in .work/voice.json, so only new or changed lines are recorded again, and deletes clips that no longer have a line.*
-
-Other tools: `native-icons.py` renders `icon.svg` into the iPhone and Android icons and splash screens; `shots.mjs` and `snap.mjs` take headless Chrome screenshots for the portfolio.
+- **Offline.** The phone apps carry every file except Explore's AR models on Android. Explore's text, pictures, animations and voice work offline everywhere; Sketchfab's live 3D needs the internet (the poster stays). The Lab works fully offline in the phone apps and, on the website, for layers already opened.
+- **Privacy.** No accounts, no analytics, no server. Settings and progress stay in localStorage. Sketchfab embeds use `dnt: 1`. Entering VR fetches standard controller models from jsDelivr.
+- **Accessibility.** Every Explore line can be heard; icon buttons have labels; tabs use `role="tab"`, `aria-selected` and `aria-current`; the search results area is `aria-live`; Settings uses radio groups and switches. The Lab's search is a combobox with arrow-key navigation; layer toggles are labelled checkboxes; reduced motion is respected. Not verified: full screen-reader testing of the 3D canvas and the Sketchfab iframes.
 
 ## Known limits and next steps
 
-- This document describes the code committed on `main`, which is what the live site serves: 49 parts in 11 systems and 50 Sketchfab models. Work in progress in the folder, not yet committed, adds more parts, splits the part page into tabs and adds a facts row to Home; this document will need a refresh when that lands.
-- Voice clips cover the lines that existed when `voice.mjs` last ran; any new line falls back to device speech until it runs again. `clips.js` still lists a few lines from older games (for example the layer names) that the app no longer uses.
-- 8 of the 49 parts have no AR model (no clean, openly licensed model was found, for example skin, tongue, muscles, spleen).
-- Real AR has not been tested on a device from this code: the iOS Simulator has no ARKit and the arm64 Android emulator fails with ARCore.
+- Explore's text was rewritten for adults in November 2026; it is plain English, but it is not yet a dedicated children's reading level.
+- The Lab model is a male atlas: no skin, uterus or breasts, so those Explore parts have no Lab link.
+- Real AR and real VR are untested on devices: the iOS Simulator has no ARKit, the arm64 Android emulator has no ARCore, and VR has run only in the Quest 3 emulator.
 - Android AR depends on the published site, because Scene Viewer downloads the GLB from `udambu.vercel.app`.
-- The live 3D depends on Sketchfab being reachable; some model licences are Sketchfab Standard or Editorial, which allow viewing in the Sketchfab player but not downloading.
-- The tools contain fixed paths from an older folder layout (`~/Documents/kanal`, `~/Documents/Udambu-iOS`); they need updating before the AR and icon scripts run again.
-- The Android build is a debug APK (version 1.0); the iPhone app installs only on simulators or through TestFlight.
-- `app.js` still contains an unused `confetti()` helper.
+- The Lab's dense layers can be slow on phones; they stay opt-in.
+- The older Anatomy Lab site (wonderworld-vr.vercel.app) still runs separately; the Lab here replaces it.
 
 ---
 
-Written from the source code on 17 November 2026. Source: [github.com/tgopinath/udambu](https://github.com/tgopinath/udambu) (iPhone shell: github.com/tgopinath/Udambu-iOS)
+Written from the source code on 19 November 2026. Source: [github.com/tgopinath/udambu](https://github.com/tgopinath/udambu) (iPhone shell: github.com/tgopinath/Udambu-iOS)

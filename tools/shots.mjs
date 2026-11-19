@@ -11,7 +11,7 @@ const DESK = path.join(ROOT, 'shots-desktop');
 const CHROME = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
-// Shoots the live site, so the card always shows what is published. LOCAL=1 shoots this folder instead (before publishing).
+// Shoots the live site, so the card always shows what is published. LOCAL=1 shoots dist/ instead (run npm run build first).
 const ORIGIN = process.env.LOCAL ? null : 'https://udambu.vercel.app', SERVER = ['python3', '-m', 'http.server', '$PORT', '--bind', '127.0.0.1'];
 const ON_LOAD = null, SEED = '';
 const SHOTS_LIST = [
@@ -19,13 +19,17 @@ const SHOTS_LIST = [
   { file: 'heart', hash: '#/part/heart', wait: 15000 },
   { file: 'illness', hash: '#/ill/stroke' },
   { file: 'play', hash: '#/play/quiz', wait: 4000, js: `document.querySelector('.opt').click(); await new Promise(r => setTimeout(r, 1200)); window.scrollTo(0, 0);` },
+  // The Lab (student level): organs over the skeleton, the stomach selected, with its "In plain words" link to Explore
+  { file: 'lab', page: 'lab/', hash: '#/?focus=visceral%3AStomach', wait: 25000 },
+  { file: 'lab-study', page: 'lab/', hash: '#/?mode=study', wait: 20000, js: `[...document.querySelectorAll('button')].find(b => b.textContent.trim() === 'Name the part')?.click(); document.querySelector('[data-testid=study-start]')?.click(); await new Promise(r => setTimeout(r, 6000));` },
   { file: 'web', hash: '#/', desktop: true, wait: 15000 },
+  { file: 'web-lab', page: 'lab/', hash: '#/?focus=cardiovascular%3ALeft%20ventricle', desktop: true, wait: 30000 },
 ];
 
 fs.mkdirSync(SHOTS, { recursive: true }); fs.mkdirSync(DESK, { recursive: true });
 const tmp = fs.mkdtempSync(path.join(ROOT, '.shots-'));
 const port = 5700 + Math.floor(Math.random() * 200), dbg = port + 1000;
-const server = ORIGIN ? null : spawn(SERVER[0], SERVER.slice(1).map(a => a.replace('$PORT', port)), { cwd: ROOT, stdio: 'ignore', env: { ...process.env, PORT: String(port) } });
+const server = ORIGIN ? null : spawn(SERVER[0], SERVER.slice(1).map(a => a.replace('$PORT', port)), { cwd: path.join(ROOT, 'dist'), stdio: 'ignore', env: { ...process.env, PORT: String(port) } });
 const chrome = spawn(CHROME, ['--headless=new', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--hide-scrollbars', '--mute-audio', `--remote-debugging-port=${dbg}`, `--user-data-dir=${tmp}/profile`, 'about:blank'], { stdio: 'ignore' });
 try {
   let ws;
@@ -40,11 +44,11 @@ try {
   const origin = ORIGIN || `http://127.0.0.1:${port}`;
   await sleep(800);
   await send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-color-scheme', value: 'light' }] });
-  const grab = async ({ file, hash = '#/', js, wait = 3000, desktop = false }) => {
+  const grab = async ({ file, page = '', hash = '#/', js, wait = 3000, desktop = false }) => {
     await send('Emulation.setDeviceMetricsOverride', desktop ? { width: 1440, height: 900, deviceScaleFactor: 1, mobile: false } : { width: 390, height: 849, deviceScaleFactor: 2, mobile: true });
     await send('Page.navigate', { url: `${origin}/` }); await sleep(1200);
     await send('Runtime.evaluate', { expression: `(async () => { localStorage.clear(); ${SEED || ''} })()`, awaitPromise: true }); await sleep(300);
-    await send('Page.navigate', { url: `${origin}/?shot=${file}${hash}` }); await sleep(wait);
+    await send('Page.navigate', { url: `${origin}/${page}?shot=${file}${hash}` }); await sleep(wait);
     if (ON_LOAD) { await send('Runtime.evaluate', { expression: ON_LOAD }); await sleep(500); }
     if (js) { const r = await send('Runtime.evaluate', { expression: `(async () => { ${js} })()`, awaitPromise: true }); if (r.result?.exceptionDetails) console.warn(file, r.result.exceptionDetails.text); await sleep(1500); }
     const s = await send('Page.captureScreenshot', { format: 'png' });
@@ -53,7 +57,7 @@ try {
     execFileSync('sips', ['-s', 'format', 'jpeg', '-s', 'formatOptions', '84', '--resampleWidth', desktop ? '1440' : '600', png, '--out', path.join(desktop ? DESK : SHOTS, file + '.jpg')], { stdio: 'pipe' });
   };
   for (const s of SHOTS_LIST) await grab(s);
-  console.log('captured', fs.readdirSync(SHOTS).join(', '), '+ shots-desktop/web.jpg');
+  console.log('captured', fs.readdirSync(SHOTS).join(', '), '+ shots-desktop/web.jpg, web-lab.jpg');
   ws.close();
 } finally {
   const exited = new Promise(r => chrome.once('exit', r));

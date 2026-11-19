@@ -1,5 +1,5 @@
 // Offline cache for the web version (the phone apps carry their files inside).
-const CACHE = 'udambu-v4-ios';
+const CACHE = 'udambu-v5-lab';   // v5: Explore + Lab in one site (the Lab's models are cached as they are opened)
 self.addEventListener('install', e => self.skipWaiting());
 self.addEventListener('activate', e => e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim())));
 self.addEventListener('fetch', e => {

@@ -1,9 +1,21 @@
-// Udambu — a human body atlas for adults: real 3D models of every part, how each one works, key figures,
-// common conditions and a quiz. Every line can also be read aloud.
+// Udambu — Explore, the plain-words level: real 3D models of every part, how each one works, key figures,
+// common conditions and a quiz. Every line can also be read aloud. The Lab (lab/, React + three.js) is the
+// student level; both share settings, progress, search and links through shared/udambu-shared.js (US below).
 const $ = (s, r = document) => r.querySelector(s);
 const app = $('#app');
 const esc = (s) => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const SYS = Object.fromEntries(SYSTEMS.map(s => [s.key, s]));
+const US = window.UdambuShared;                      // shared with the Lab: settings, progress, links, search
+const LAB = US.LAB_URL;                              // the Lab page, relative to this one
+document.querySelectorAll('[data-lab-link]').forEach(a => a.setAttribute('href', LAB));
+// "Start in the Lab" (Settings): on a fresh launch at Home, open the Lab instead. Only once per session,
+// so the Explore switch always works afterwards.
+try {
+  if (US.settings.get().startLevel === 'lab' && ['', '#', '#/'].includes(location.hash) && !sessionStorage.getItem('udambu.started')) {
+    sessionStorage.setItem('udambu.started', '1'); location.replace(LAB);
+  }
+  sessionStorage.setItem('udambu.started', '1');
+} catch {}
 const store = { get(k, d) { try { return JSON.parse(localStorage.getItem('be.' + k)) ?? d; } catch { return d; } },
   set(k, v) { try { localStorage.setItem('be.' + k, JSON.stringify(v)); } catch {} } };
 
@@ -44,17 +56,23 @@ const ICONS = {
   refresh: '<path d="M20 12a8 8 0 1 1-2.3-5.7M20 4v5h-5"/>',
   ar: '<path d="M12 3 20 7.5v9L12 21l-8-4.5v-9Z"/><path d="M12 12 20 7.5M12 12v9M12 12 4 7.5"/><path d="M3 4V2h2M21 4V2h-2M3 20v2h2M21 20v2h-2" stroke-width="1.4"/>',
   close: '<path d="M6 6l12 12M18 6 6 18"/>',
+  search: '<circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.4-4.4"/>',
+  settings: '<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.9 4.9 7 7M17 17l2.1 2.1M2 12h3M19 12h3M4.9 19.1 7 17M17 7l2.1-2.1"/>',
+  layers: '<path d="m12 3 9 5-9 5-9-5Z"/><path d="m3 13 9 5 9-5"/>',
+  vr: '<path d="M3 8.5A2.5 2.5 0 0 1 5.5 6h13A2.5 2.5 0 0 1 21 8.5v6a2.5 2.5 0 0 1-2.5 2.5h-3l-2-2.5h-3l-2 2.5h-3A2.5 2.5 0 0 1 3 14.5Z"/><circle cx="8" cy="11.5" r="1.6"/><circle cx="16" cy="11.5" r="1.6"/>',
 };
 const icon = (n, cls = '') => `<svg class="k-icon ${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[n] || ''}</svg>`;
 document.querySelectorAll('[data-icon]').forEach(el => el.innerHTML = icon(el.dataset.icon));
 $('#back').innerHTML = icon('back');
+$('#searchBtn').innerHTML = icon('search'); $('#settingsBtn').innerHTML = icon('settings');
 
 // ---------- Voice ----------
-let muted = store.get('muted', true);   // pages don't read themselves aloud unless the reader turns it on; Listen buttons always work
+// pages don't read themselves aloud unless the reader turns it on (Settings, or the speaker button); Listen buttons always work
+let muted = !US.settings.get().autoRead;
 const muteBtn = $('#mute');
 const paintMute = () => { muteBtn.innerHTML = icon(muted ? 'mute' : 'speaker'); muteBtn.setAttribute('aria-label', muted ? 'Auto read-aloud off' : 'Auto read-aloud on'); muteBtn.setAttribute('aria-pressed', String(muted)); };
 paintMute();
-muteBtn.onclick = () => { muted = !muted; store.set('muted', muted); if (muted) Voice.stop(); paintMute(); };
+muteBtn.onclick = () => { muted = !muted; US.settings.set({ autoRead: !muted }); if (muted) Voice.stop(); paintMute(); };
 // say: plays the recorded clip when there is one, otherwise the device voice
 function say(id, text, btn) { if (muted) return; Voice.play(id, text, btn); }
 // a big round speaker button that reads `text`
@@ -108,8 +126,11 @@ document.addEventListener('click', (e) => { const b = e.target.closest('[data-ar
 
 // ---------- Android app mode (Material Design 3, from the shared Kolam M3 kit) ----------
 // Only inside the Android app (or ?app=android); in a browser KolamM3.init returns a stub and nothing changes.
-const m3Actions = () => [{ id: 'm3Mute', icon: muted ? 'volume_off' : 'volume_up', label: muted ? 'Auto read-aloud off' : 'Auto read-aloud on',
-  onClick: () => { muteBtn.click(); m3.setActions(m3Actions()); } }];
+const m3Actions = () => [
+  { id: 'm3Search', icon: 'search', label: 'Search', href: '#/search' },
+  { id: 'm3Mute', icon: muted ? 'volume_off' : 'volume_up', label: muted ? 'Auto read-aloud off' : 'Auto read-aloud on',
+    onClick: () => { muteBtn.click(); m3.setActions(m3Actions()); } },
+  { id: 'm3Settings', icon: 'settings', label: 'Settings', href: '#/settings' }];
 const m3 = window.KolamM3 ? KolamM3.init({
   primary: '#0a8fc7', title: 'Udambu',
   destinations: [
@@ -117,17 +138,21 @@ const m3 = window.KolamM3 ? KolamM3.init({
     { id: 'parts', label: 'Parts', icon: 'grid_view', href: '#/parts' },
     { id: 'sick', label: 'Health', icon: 'health_and_safety', href: '#/sick' },
     { id: 'play', label: 'Quiz', icon: 'quiz', href: '#/play' },
+    { id: 'lab', label: 'Lab', icon: 'view_in_ar', href: LAB },
   ],
-  actions: m3Actions(), icons: ['volume_off', 'volume_up'],
+  actions: m3Actions(), icons: ['volume_off', 'volume_up', 'search', 'settings'],
   hide: ['.topbar', '.tabbar'],
 }) : { enabled: false, setTitle() {}, setActive() {}, setBack() {}, setActions() {} };
 
 // ---------- iPhone app mode (Apple HIG, from the shared Kolam iOS kit; local copy in vendor/ios) ----------
 // Only inside the Udambu-iOS shell (or ?app=ios); KolamIOS.init returns null in a browser and nothing changes.
-const IOS_UP = { parts: ['#/parts', 'Parts'], sick: ['#/sick', 'Health'], play: ['#/play', 'Quiz'] };
+const IOS_UP = { parts: ['#/parts', 'Parts'], sick: ['#/sick', 'Health'], play: ['#/play', 'Quiz'], body: ['#/', 'Body'] };
 const iosIcon = n => icon(n, 'ios-icon');
-const iosActions = () => [{ id: 'iosMute', icon: iosIcon(muted ? 'mute' : 'speaker'), label: muted ? 'Auto read-aloud off' : 'Auto read-aloud on',
-  onClick: () => { muteBtn.click(); iosNav(); } }];
+const iosActions = () => [
+  { id: 'iosSearch', icon: iosIcon('search'), label: 'Search', onClick: () => (location.hash = '#/search') },
+  { id: 'iosMute', icon: iosIcon(muted ? 'mute' : 'speaker'), label: muted ? 'Auto read-aloud off' : 'Auto read-aloud on',
+    onClick: () => { muteBtn.click(); iosNav(); } },
+  { id: 'iosSettings', icon: iosIcon('settings'), label: 'Settings', onClick: () => (location.hash = '#/settings') }];
 const ios = document.documentElement.classList.contains('ios') && window.KolamIOS ? KolamIOS.init({
   appName: 'Udambu', uaTokens: ['Udambu-iOS'],
   tint: { light: '#0070ac', dark: '#6fd4ff' },
@@ -136,6 +161,7 @@ const ios = document.documentElement.classList.contains('ios') && window.KolamIO
     { id: 'parts', label: 'Parts', icon: 'square.grid.2x2', href: '#/parts' },
     { id: 'sick', label: 'Health', icon: iosIcon('shield'), href: '#/sick' },
     { id: 'play', label: 'Quiz', icon: 'star', href: '#/play' },
+    { id: 'lab', label: 'Lab', icon: iosIcon('cube'), href: LAB },
   ],
   currentTab: 'body', content: '#app',
 }) : null;
@@ -152,6 +178,7 @@ const routes = [
   [/^#?\/?$/, home], [/^#\/parts$/, partsPage], [/^#\/part\/([\w-]+)$/, partPage],
   [/^#\/sick$/, sickPage], [/^#\/ill\/([\w-]+)$/, illPage], [/^#\/play$/, playPage],
   [/^#\/play\/quiz$/, quizGame], [/^#\/play\/which$/, whichGame],
+  [/^#\/search(?:\?q=(.*))?$/, searchPage], [/^#\/settings$/, settingsPage],
 ];
 let cleanups = [];
 const onLeave = (fn) => cleanups.push(fn);
@@ -161,10 +188,10 @@ function render() {
   for (const [re, fn] of routes) { const m = h.match(re); if (m) { fn(...m.slice(1)); break; } }
   const tab = /^#\/part/.test(h) ? 'parts' : /^#\/(sick|ill)/.test(h) ? 'sick' : /^#\/play/.test(h) ? 'play' : 'body';
   document.querySelectorAll('.tabbar a').forEach(a => a.dataset.tab === tab ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current'));
-  const deep = /^#\/(part|ill)\/|^#\/play\//.test(h);
+  const deep = /^#\/(part|ill)\/|^#\/play\/|^#\/(search|settings)/.test(h);
   $('#back').hidden = !deep; document.body.classList.toggle('deep', deep);
   // Android app (M3): the kit resets its overrides on every route change, so set ours just after it
-  if (m3.enabled) setTimeout(() => { m3.setActive(tab); m3.setBack(/^#\/part\//.test(h) ? '#/parts' : /^#\/ill\//.test(h) ? '#/sick' : /^#\/play\//.test(h) ? '#/play' : null); });
+  if (m3.enabled) setTimeout(() => { m3.setActive(tab); m3.setBack(/^#\/part\//.test(h) ? '#/parts' : /^#\/ill\//.test(h) ? '#/sick' : /^#\/play\//.test(h) ? '#/play' : /^#\/(search|settings)/.test(h) ? '#/' : null); });
   if (ios) {   // root pages: the page's own heading becomes the large title (the page copy is hidden in styles.css)
     const ph = app.querySelector('.page-head h1');
     if (ph && !deep) iosState.title = ph.textContent;
@@ -195,6 +222,9 @@ function mountSketchfab(root = document) {
 const credit = (k) => { const m = MODELS[k]; return m ? `<p class="credit">3D model “${esc(m.name)}” by ${esc(m.by)} on Sketchfab${m.license ? ' · ' + esc(m.license) : ''}</p>` : ''; };
 const eyebrow = (t) => `<p class="eyebrow">${esc(t)}</p>`;
 
+// "See it in the Lab": the same structure in the student atlas (layers, sections, VR), when the Lab model has it
+const labButton = (k, label = 'See it in the Lab') => { const href = US.labHref(k, LAB); return href ? `<a class="lab-btn" href="${href}" data-testid="see-in-lab">${icon('layers')}<span>${esc(label)}</span></a>` : ''; };
+
 // picture card for a part (its 3D model)
 const partCard = (p) => `<a class="pcard" href="#/part/${p.key}" style="--sys:${SYS[p.sys].color}">
   <span class="pcard-art">${img3d(p.key)}</span><span class="pcard-text"><span class="pcard-sys">${esc(SYS[p.sys].name)}</span><span class="pcard-name">${esc(p.name)}</span></span></a>`;
@@ -219,13 +249,18 @@ function home() {
           <button class="k-btn k-btn-outline" id="moreFacts">${icon('refresh')} More facts</button></div>
         <div class="wowgrid" id="wowgrid"></div>
       </section>
+      ${levelChooser()}
       <section class="systems">
         <div class="row-head"><h2 class="heading-2">Body systems</h2><a class="link" href="#/parts">All parts ${icon('next')}</a></div>
         <div class="sysrail" role="tablist">${SYSTEMS.map(s => { const first = PARTS.find(p => p.sys === s.key);
           return `<button class="systile" role="tab" data-sys="${s.key}" aria-selected="${s.key === sys}" style="--sys:${s.color}">${img3d(first.key)}<span><b>${esc(s.name)}</b><small>${PARTS.filter(p => p.sys === s.key).length} parts</small></span></button>`; }).join('')}</div>
       </section>
       <section class="sysparts" id="sysparts"></section>
+      ${labPromo()}
+      ${progressStrip()}
     </section>`;
+  app.querySelectorAll('[data-level]').forEach(b => b.onclick = () => { haptic(); const lv = b.dataset.level; US.settings.set({ startLevel: lv });
+    if (lv === 'lab') location.href = LAB; else render(); });
   const paint = (speak) => {
     const s = SYS[sys];
     $('#sysparts').innerHTML = `<div class="row-head"><div><h2 class="heading-2">${esc(s.name)}</h2><p class="muted">${esc(s.say)}</p></div>${speakBtn('sys-' + s.key, s.name + '. ' + s.say, 'Listen', true)}</div>
@@ -261,7 +296,7 @@ function partsPage() {
 // ---------- One body part ----------
 function partPage(key) {
   const p = PART[key]; if (!p) return (location.hash = '#/parts');
-  setTitle(p.name);
+  setTitle(p.name); US.progress.markSeen(key);
   const s = SYS[p.sys];
   const team = PARTS.filter(x => x.sys === p.sys), i = team.indexOf(p);
   const prev = team[(i - 1 + team.length) % team.length], next = team[(i + 1) % team.length];
@@ -274,7 +309,7 @@ function partPage(key) {
         ${eyebrow(s.name)}
         <h1 class="display">${esc(p.name)}</h1>${p.term ? `<p class="term">${esc(p.term)}</p>` : ''}
         <p class="lede">${esc(p.say)}</p>
-        <div class="hero-actions">${arButton(key)}${speakBtn(key + '-say', p.name + '. ' + p.say, 'Listen', !!AR_MODELS[key])}</div>
+        <div class="hero-actions">${arButton(key)}${labButton(key)}${speakBtn(key + '-say', p.name + '. ' + p.say, 'Listen', !!AR_MODELS[key])}</div>
       </div>
     </header>
     ${p.wow ? `<button class="wow" data-say="${key}-wow" data-text="${esc(p.wow)}"><span class="wow-k">${icon('sparkle')} Did you know?</span><span class="wow-t">${esc(p.wow)}</span></button>` : ''}
@@ -335,6 +370,113 @@ function partPage(key) {
   show(tab); onLeave(() => stop());
   setTimeout(() => say(key + '-say', p.name + '. ' + p.say, $('.hero-actions .speak')), 300);
 }
+
+// ---------- Two levels: Explore (here) and the Lab ----------
+// Asked once on Home (and changeable in Settings): who is learning decides where Udambu opens.
+function levelChooser() {
+  if (US.settings.get().startLevel) return '';
+  return `<section class="chooser" aria-labelledby="chooserTitle">
+    <div><p class="eyebrow">Two levels</p><h2 class="heading-2" id="chooserTitle">Who is learning today?</h2>
+      <p class="muted">Pick where Udambu opens. You can switch levels at any time.</p></div>
+    <div class="chooser-opts">
+      <button class="chooser-opt" data-level="explore">${icon('person')}<span><b>Explore</b><small>Plain words for everyone from age 5: real 3D parts, how they work, voice, AR and a quiz.</small></span></button>
+      <button class="chooser-opt" data-level="lab">${icon('layers')}<span><b>Lab</b><small>For students: 2,827 named structures, layers, cross-sections, study cards and VR.</small></span></button>
+    </div></section>`;
+}
+function labPromo() {
+  const feats = [['layers', '2,827 structures', 'Every named bone, muscle, vessel, nerve and organ, layer by layer.'],
+    ['cube', 'Cross-sections', 'Cut axial, sagittal or coronal slices through the real model.'],
+    ['check', 'Study cards', 'Locate and name quizzes with spaced repetition.'],
+    ['vr', 'Life-size VR', 'Walk around the body in a Meta Quest browser.']];
+  return `<section class="labpromo">
+    <div class="labpromo-head"><div><p class="eyebrow">Udambu Lab · for students</p><h2 class="heading-2">Go deeper in the Lab</h2>
+      <p class="muted">The same body as a full anatomy atlas from open data (BodyParts3D and Z-Anatomy). Every part page here links to its structure there.</p></div>
+      <div class="labpromo-actions"><a class="k-btn k-btn-primary" href="${LAB}">${icon('layers')} Open the Lab</a><a class="k-btn k-btn-outline" href="${LAB}#/?mode=study">Start studying</a></div></div>
+    <ul class="labfeats">${feats.map(([ic, t, d]) => `<li>${icon(ic)}<b>${t}</b><span>${d}</span></li>`).join('')}</ul></section>`;
+}
+function progressStrip() {
+  const s = US.progress.summary(PARTS.length);
+  if (!s.partsSeen && s.quizBest == null && !s.labAnswered) return '';
+  const cell = (v, l) => `<div class="k-stat"><span class="k-stat-value">${v}</span><span class="k-stat-label">${l}</span></div>`;
+  return `<section class="progress-strip"><div class="row-head"><h2 class="heading-2">Your progress</h2><a class="link" href="#/settings">Settings ${icon('next')}</a></div>
+    <div class="stats-row">${cell(`${s.partsSeen}<small>/${s.partsTotal}</small>`, 'Parts explored')}${cell(s.quizBest == null ? '–' : `${s.quizBest}<small>/10</small>`, 'Best body quiz')}
+    ${cell(s.labAnswered, 'Lab cards answered')}${cell(s.labAccuracy == null ? '–' : s.labAccuracy + '%', 'Lab answers right')}</div></section>`;
+}
+
+// ---------- One search across both levels ----------
+let labNames = null;
+const loadLabNames = () => labNames ??= new Promise((ok) => {
+  if (window.UDAMBU_LAB_NAMES) return ok(window.UDAMBU_LAB_NAMES);
+  const s = document.createElement('script'); s.src = 'shared/lab-names.js';
+  s.onload = () => ok(window.UDAMBU_LAB_NAMES || []); s.onerror = () => ok([]); document.head.appendChild(s);
+});
+const LAB_SYS = { skeletal: 'Skeletal', muscular: 'Muscular', joints: 'Joints & ligaments', cardiovascular: 'Cardiovascular', nervous: 'Nervous', visceral: 'Organs', lymphatic: 'Lymphatic' };
+function searchPage(q0) {
+  setTitle('Search');
+  const q = decodeURIComponent(q0 || '');
+  app.innerHTML = `<section class="page search">
+    <header class="page-head"><div>${eyebrow('Explore and Lab')}<h1 class="display">Search</h1></div></header>
+    <label class="searchbox">${icon('search')}<input type="search" id="q" value="${esc(q)}" placeholder="A part, a condition or any of 2,827 structures" aria-label="Search Udambu" autocomplete="off"></label>
+    <div id="results" aria-live="polite"></div></section>`;
+  const input = $('#q'), out = $('#results');
+  const paint = async () => {
+    const v = input.value.trim();
+    if (!v) { out.innerHTML = `<p class="muted">Try “heart”, “femur”, “migraine” or “sciatic nerve”.</p>`; return; }
+    const r = US.search(v, { parts: PARTS, illnesses: ILLNESSES, lab: await loadLabNames() }, 8);
+    if (input.value.trim() !== v) return;
+    const none = !r.parts.length && !r.illnesses.length && !r.lab.length;
+    out.innerHTML = none ? `<p class="muted">Nothing found for “${esc(v)}”.</p>` : `
+      ${r.parts.length ? `<h2 class="eyebrow res-h">Explore · body parts</h2><div class="pgrid small">${r.parts.map(partCard).join('')}</div>` : ''}
+      ${r.illnesses.length ? `<h2 class="eyebrow res-h">Explore · conditions</h2><div class="ill-chips">${r.illnesses.map(i => `<a class="ill-chip" href="#/ill/${i.key}">${icon(kindIcon(i))}${esc(i.name)}${icon('next')}</a>`).join('')}</div>` : ''}
+      ${r.lab.length ? `<h2 class="eyebrow res-h">Lab · 3D atlas structures</h2><ul class="rows labhits">${r.lab.map(h => `<li><a href="${LAB}#/?focus=${encodeURIComponent(h.system + ':' + h.base)}">${icon('layers')}<span><b>${esc(h.base.replace(/^\((.*)\)$/, '$1'))}</b><small>${LAB_SYS[h.system] || h.system}${h.explore && PART[h.explore] ? ' · explained in Explore as ' + esc(PART[h.explore].name) : ''}</small></span>${icon('next')}</a></li>`).join('')}</ul>` : ''}`;
+  };
+  let t; input.oninput = () => { clearTimeout(t); t = setTimeout(() => { history.replaceState(null, '', '#/search' + (input.value ? '?q=' + encodeURIComponent(input.value) : '')); paint(); }, 120); };
+  paint(); setTimeout(() => input.focus(), 50);
+}
+
+// ---------- One settings screen for both levels ----------
+function settingsPage() {
+  setTitle('Settings');
+  const st = US.settings.get();
+  const seg = (name, val, opts) => `<div class="seg" role="radiogroup" data-set="${name}">${opts.map(([v, l]) => `<button role="radio" data-v="${v}" aria-checked="${String(v) === String(val)}" aria-selected="${String(v) === String(val)}">${l}</button>`).join('')}</div>`;
+  const sw = (name, on, text, sub) => `<label class="k-switch setrow"><span><b>${text}</b>${sub ? `<small>${sub}</small>` : ''}</span><input type="checkbox" data-sw="${name}" ${on ? 'checked' : ''}><span class="k-switch-track" aria-hidden="true"></span></label>`;
+  const s = US.progress.summary(PARTS.length);
+  app.innerHTML = `<section class="page settings">
+    <header class="page-head"><div>${eyebrow('Explore and Lab')}<h1 class="display">Settings</h1></div></header>
+    <section class="setgroup"><h2 class="heading-3">Open Udambu in</h2><p class="muted">Where a fresh start lands. Explore for plain words, the Lab for students.</p>
+      ${seg('startLevel', st.startLevel ?? 'ask', [['explore', 'Explore'], ['lab', 'Lab'], ['ask', 'Ask me']])}</section>
+    <section class="setgroup"><h2 class="heading-3">Voice</h2>
+      ${sw('autoRead', st.autoRead, 'Read pages aloud automatically', 'Listen buttons always work, with or without this.')}</section>
+    <section class="setgroup"><h2 class="heading-3">VR comfort in the Lab</h2><p class="muted">For Meta Quest and other headsets. Takes effect next time you enter VR.</p>
+      <p class="setlabel">Turning</p>${seg('vr.turn', st.vr.turn, [['snap', 'Snap turn'], ['smooth', 'Smooth turn']])}
+      <p class="setlabel">Snap angle</p>${seg('vr.snapDegrees', st.vr.snapDegrees, [[30, '30°'], [45, '45°']])}
+      ${sw('vr.teleport', st.vr.teleport, 'Teleport', 'Push a thumbstick forward to aim, pull the trigger to jump.')}
+      ${sw('vr.vignette', st.vr.vignette, 'Comfort vignette', 'Darkens the edges while turning, which helps with motion sickness.')}</section>
+    <section class="setgroup"><h2 class="heading-3">Your progress</h2><p class="muted">Kept on this device only.</p>
+      <div class="stats-row">
+        <div class="k-stat"><span class="k-stat-value">${s.partsSeen}<small>/${s.partsTotal}</small></span><span class="k-stat-label">Parts explored</span></div>
+        <div class="k-stat"><span class="k-stat-value">${s.quizBest ?? '–'}${s.quizBest == null ? '' : '<small>/10</small>'}</span><span class="k-stat-label">Best body quiz</span></div>
+        <div class="k-stat"><span class="k-stat-value">${s.labAnswered}</span><span class="k-stat-label">Lab cards answered</span></div>
+        <div class="k-stat"><span class="k-stat-value">${s.labLearned}</span><span class="k-stat-label">Lab cards learned</span></div></div>
+      <div class="set-actions"><button class="k-btn k-btn-outline" data-reset="explore">Reset Explore</button><button class="k-btn k-btn-outline" data-reset="lab">Reset Lab study</button><button class="k-btn k-btn-outline" data-reset="all">Reset everything</button></div></section>
+    <section class="setgroup"><h2 class="heading-3">About</h2>
+      <ul class="rows labhits"><li><a href="${LAB}#/about">${icon('layers')}<span><b>Sources, licences and privacy</b><small>Lab models: BodyParts3D and Z-Anatomy (CC BY-SA), used under CC BY-NC-SA 4.0. Explore models: Sketchfab authors, credited on each page.</small></span>${icon('next')}</a></li></ul>
+      <p class="credit">General information, not medical advice. No accounts, no analytics.</p></section>
+  </section>`;
+  const save = (path, v) => { const [a, b] = path.split('.'); US.settings.set(b ? { [a]: { [b]: v } } : { [a]: v }); haptic(); };
+  app.querySelectorAll('[data-set]').forEach(g => g.onclick = (e) => { const b = e.target.closest('[data-v]'); if (!b) return;
+    let v = b.dataset.v; if (g.dataset.set === 'startLevel' && v === 'ask') v = null; if (g.dataset.set === 'vr.snapDegrees') v = +v;
+    save(g.dataset.set, v); g.querySelectorAll('[data-v]').forEach(x => { const on = x === b; x.setAttribute('aria-checked', on); x.setAttribute('aria-selected', on); }); });
+  app.querySelectorAll('[data-sw]').forEach(i => i.onchange = () => { save(i.dataset.sw, i.checked); if (i.dataset.sw === 'autoRead') { muted = !i.checked; if (muted) Voice.stop(); paintMute(); } });
+  app.querySelectorAll('[data-reset]').forEach(b => b.onclick = () => {
+    const what = { explore: 'parts explored and quiz scores', lab: 'Lab study cards and answers', all: 'all progress in Explore and the Lab' }[b.dataset.reset];
+    if (!confirm(`Reset ${what} on this device?`)) return;
+    US.progress.reset(b.dataset.reset === 'all' ? undefined : b.dataset.reset);
+    if (b.dataset.reset !== 'lab') store.set('best', {});
+    toast('Progress reset'); render();
+  });
+}
+const toast = (t) => { const w = $('#toast'); w.innerHTML = `<div class="k-toast"><span class="k-toast-text">${esc(t)}</span></div>`; setTimeout(() => (w.innerHTML = ''), 2400); };
 
 const kindIcon = (ill) => ill.kind === 'hurt' ? 'hurt' : ill.kind === 'germ' ? 'germ' : 'heart';
 const MOSQUITO = new Set(['malaria', 'dengue']);
@@ -406,6 +548,7 @@ const scoreBar = (score, round) => `<div class="score" aria-label="Question ${ro
 function finish(game, score) {
   const n = score.filter(Boolean).length, best = store.get('best', {});
   if (best[game] == null || n > best[game]) { best[game] = n; store.set('best', best); }
+  US.progress.setBest(game, n);
   const msg = n >= 8 ? 'Excellent. You know the body well.' : n >= 5 ? 'Good result. Review the explanations to learn more.' : 'Keep going. Each answer explains the facts.';
   app.querySelector('.gamebox').innerHTML = `<div class="done"><p class="eyebrow">Your score</p><p class="done-score">${n}<span>/10</span></p>
     <div class="stars">${[3, 6, 9].map(t => icon('star', n >= t ? 'lit' : '')).join('')}</div><p class="lede">${msg}</p>

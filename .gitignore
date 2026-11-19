@@ -1,2 +1,11 @@
+node_modules
+dist
+coverage
+test-results
+playwright-report
 .work/
 .DS_Store
+.vercel
+.env*
+!.env.example
+*.log

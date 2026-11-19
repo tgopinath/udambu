@@ -1,0 +1,54 @@
+/* Native looks for the Lab. Website: nothing here applies (every rule needs html.k-android or html.k-ios).
+   The Lab's Tailwind colours are CSS variables, so pointing them at the kits' system colours restyles
+   every panel, button and chip without touching the components. */
+
+/* ---------- Android app: Material 3 (Kolam M3 kit) ---------- */
+html.k-android {
+  --color-panel: var(--md-sys-color-surface-container);
+  --color-panel-2: var(--md-sys-color-surface-container-highest);
+  --color-line: var(--md-sys-color-outline-variant);
+  --color-ink: var(--md-sys-color-on-surface);
+  --color-mute: var(--md-sys-color-on-surface-variant);
+  --color-faint: var(--md-sys-color-on-surface-variant);
+  --color-accent: var(--md-sys-color-primary);
+  --color-on-accent: var(--md-sys-color-on-primary);
+}
+html.k-android .lab-web-only { display: none !important; }
+/* The kit's top app bar (sticky, 64dp) and navigation bar (80dp) frame the 3D workspace. */
+html.k-android .lab-shell { top: calc(64px + var(--md-inset-top, 0px)); bottom: calc(80px + var(--md-inset-bottom, 0px)); }
+html.k-android .lab-topbar { border-bottom: 0; background: var(--md-sys-color-surface-container); }
+html.k-android .lab-shell :is(button, select, .lab-search) { border-radius: var(--md-sys-shape-corner-full); }
+html.k-android .lab-shell [role='toolbar'],
+html.k-android .lab-shell aside { border-radius: var(--md-sys-shape-corner-large); }
+html.k-android .lab-shell aside { border-radius: 0; }
+html.k-android .lab-modes { border-radius: var(--md-sys-shape-corner-full); border-color: var(--md-sys-color-outline); }
+html.k-android .lab-modes [aria-selected='true'] { background: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container); }
+html.k-android .lab-search { height: 40px; background: var(--md-sys-color-surface-container-high); border-color: transparent; }
+html.k-android .lab-shell button { min-height: 32px; }
+
+/* ---------- iPhone app: Apple HIG (Kolam iOS kit) ---------- */
+html.k-ios {
+  --color-panel: var(--ios-grouped2);
+  --color-panel-2: var(--ios-fill3);
+  --color-line: var(--ios-sep);
+  --color-ink: var(--ios-label);
+  --color-mute: var(--ios-label2);
+  --color-faint: var(--ios-label2);
+  --color-accent: var(--ios-tint);
+  --color-on-accent: var(--ios-on-tint);
+}
+html.k-ios .lab-web-only { display: none !important; }
+html.k-ios .lab-shell { font-family: var(--ios-font); top: calc(54px + var(--sat, 0px)); bottom: var(--ios-tabbar-space, 0px); }
+html.k-ios.k-ios-classic .lab-shell { top: calc(44px + var(--sat, 0px)); }
+html.k-ios .lab-topbar { border-bottom: 0; background: transparent; }
+html.k-ios .lab-shell :is(button, select, .lab-search) { border-radius: 999px; }
+html.k-ios .lab-shell aside { border-radius: 0; border-color: var(--ios-sep); }
+html.k-ios .lab-modes { border: 0; background: var(--ios-fill3); border-radius: 999px; padding: 2px; }
+html.k-ios .lab-modes [aria-selected='true'] { background: #636366; color: var(--ios-label); }
+html.k-ios .lab-search { height: 36px; border: 0; background: var(--ios-fill3); font-size: 17px; }
+html.k-ios .lab-shell [role='toolbar'] { border-radius: 22px; }
+html.k-ios .lab-shell :is(button, a):active { opacity: .6; }
+
+/* About page inside the apps: the kit bars replace the page header. */
+html:is(.k-android, .k-ios) .about-head { display: none; }
+html.k-ios .about-page { padding-top: 8px; }
